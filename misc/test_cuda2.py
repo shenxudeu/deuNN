@@ -3,7 +3,7 @@ import theano
 import theano.tensor as T
 rng = numpy.random
 
-N = 40000
+N = 4000
 feats = 784
 D = (rng.randn(N, feats).astype(theano.config.floatX),
 rng.randint(size=N,low=0, high=2).astype(theano.config.floatX))
