@@ -1,21 +1,27 @@
 import numpy
 import theano
 import theano.tensor as T
+
+import pdb
+
+theano.config.floatX = 'float32'
 rng = numpy.random
 
-N = 4000
+N = 40000
 feats = 784
 D = (rng.randn(N, feats).astype(theano.config.floatX),
-rng.randint(size=N,low=0, high=2).astype(theano.config.floatX))
+        rng.randint(size=N,low=0, high=2).astype(theano.config.floatX))
 training_steps = 10000
 
 # Declare Theano symbolic variables
-x = T.matrix("x")
-y = T.vector("y")
+#x = T.matrix("x")
+#y = T.vector("y")
+x = theano.shared(D[0],borrow=True,name='x')
+y = theano.shared(D[1],borrow=True,name='y')
 w = theano.shared(rng.randn(feats).astype(theano.config.floatX), name="w")
 b = theano.shared(numpy.asarray(0., dtype=theano.config.floatX), name="b")
-x.tag.test_value = D[0]
-y.tag.test_value = D[1]
+#x.tag.test_value = D[0]
+#y.tag.test_value = D[1]
 #print "Initial model:"
 #print w.get_value(), b.get_value()
 
@@ -23,16 +29,16 @@ y.tag.test_value = D[1]
 p_1 = 1 / (1 + T.exp(-T.dot(x, w)-b)) # Probability of having a one
 prediction = p_1 > 0.5 # The prediction that is done: 0 or 1
 xent = -y*T.log(p_1) - (1-y)*T.log(1-p_1) # Cross-entropy
-cost = xent.mean() + 0.01*(w**2).sum() # The cost to optimize
+cost = T.cast(xent.mean(),theano.config.floatX) + 0.01*(w**2).sum() # The cost to optimize
 gw,gb = T.grad(cost, [w,b])
 
 # Compile expressions to functions
 train = theano.function(
-            inputs=[x,y],
+            inputs=[],
             outputs=[prediction, xent],
-            updates={w:w-0.01*gw, b:b-0.01*gb},
+            updates=[(w,w-0.01*gw), (b,b-0.01*gb)],
             name = "train")
-predict = theano.function(inputs=[x], outputs=prediction,
+predict = theano.function(inputs=[], outputs=prediction,
             name = "predict")
 
 if any([x.op.__class__.__name__ in ['Gemv', 'CGemv', 'Gemm', 'CGemm'] for x in
@@ -45,8 +51,13 @@ else:
     print 'ERROR, not able to tell if theano used the cpu or the gpu'
     print train.maker.fgraph.toposort()
 
+
+#train_x = theano.shared(D[0],borrow=True)
+#train_y = theano.shared(D[1],borrow=True)
+#pdb.set_trace()
 for i in range(training_steps):
-    pred, err = train(D[0], D[1])
+    pred, err = train()
+    #pred, err = train(train_x, train_y)
 #print "Final model:"
 #print w.get_value(), b.get_value()
 
@@ -54,4 +65,4 @@ print "target values for D"
 print D[1]
 
 print "prediction on D"
-print predict(D[0])
+print predict()
