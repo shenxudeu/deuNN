@@ -38,7 +38,7 @@ class AffineLayer(Layer):
     """
     def __init__(self, nb_input, nb_output, init='normal',
             activation='linear', W_regularizer=None):
-        super(FullyConnectedLayer, self).__init__()
+        super(AffineLayer, self).__init__()
         self.init = initializations.get(init)
         self.activation = activations.get(activation)
         self.nb_input = nb_input
