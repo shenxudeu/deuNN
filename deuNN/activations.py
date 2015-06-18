@@ -30,3 +30,10 @@ def leaky_relu(x):
 
 def maxout(x):
     raise NotImplementedError
+
+
+# The module get function, used to fetch function handle from outside
+# This is a basic routine in a module
+from .utils.generic_utils import get_from_module
+def get(identifier):
+    return get_from_module(identifier, globals(), 'activations')

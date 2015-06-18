@@ -10,7 +10,10 @@ import theano.tensor as T
 import pdb
 
 def shared_data(np_data, borrow=True):
-    return theano.shared(np.asarray(np_data, theano.config.floatX), borrow=borrow)
+    return theano.shared(np.asarray(np_data, dtype=theano.config.floatX), borrow=borrow)
+def shared_data_int32(np_data, borrow=True):
+    return theano.shared(np.asarray(np_data, dtype='int32'), borrow=borrow)
+
 
 def load_mnist(dataset):
     """
@@ -32,13 +35,32 @@ def load_mnist(dataset):
     with gzip.open(dataset, 'rb') as handle:
         train_set, valid_set, test_set = cPickle.load(handle)
     
-    train_X, train_y = shared_data(train_set[0]),shared_data(train_set[1])
-    valid_X, valid_y = shared_data(valid_set[0]),shared_data(valid_set[1])
-    test_X, test_y   = shared_data(test_set[0]),shared_data(test_set[1])
+    train_X, train_y = shared_data(train_set[0]),shared_data_int32(to_categorical(train_set[1]))
+    valid_X, valid_y = shared_data(valid_set[0]),shared_data_int32(to_categorical(valid_set[1]))
+    test_X, test_y   = shared_data(test_set[0]),shared_data_int32(to_categorical(test_set[1]))
     
     rval = [(train_X, train_y), (valid_X, valid_y), (test_X, test_y)]
 
     return rval
+
+
+def to_categorical(y, nb_classes=None):
+    """
+    convert class vector (int: 0 to num_classes)
+    to one-hot presentation
+    Input:
+        - y: np array, N x 1
+        - nb_classes: int, number of classes
+    Output:
+        - Y: theano.shared(dtype='int32'), one-hot presentation
+    """
+    N = len(y)
+    y = np.asarray(y, dtype='int32')
+    if nb_classes is None:
+        nb_classes = 1 + np.max(y)
+    Y = np.zeros((N,nb_classes))
+    Y[np.arange(N),y] = 1.
+    return Y
 
 
 def train_softmax(learning_rate = .13, n_epochs=20,
@@ -53,6 +75,8 @@ def train_softmax(learning_rate = .13, n_epochs=20,
     n_train_batches = train_X.shape.eval()[0] / batch_size
     n_valid_batches = valid_X.shape.eval()[0] / batch_size
     n_test_batches = test_X.shape.eval()[0] / batch_size
+
+
     N, D = train_X.shape.eval()
     k = 10
 
@@ -69,14 +93,12 @@ def train_softmax(learning_rate = .13, n_epochs=20,
                 dtype=theano.config.floatX),
             name='b', borrow = True)
     X = T.matrix('x',dtype=theano.config.floatX)
-    y = T.vector('y',dtype='float32')
+    y = T.matrix('y',dtype='int32')
 
     # forward propagation
     p_y_given_x = T.nnet.softmax(T.dot(X,W)+b) # (N x k)
-    y_pred  = T.cast(T.argmax(p_y_given_x,axis=1),'float32')
-    data_loss = -T.cast(T.mean(T.log(p_y_given_x)[T.arange(y.shape[0]),
-                                                  T.cast(y,'int32')]),'float32')
-    pred_error =  T.cast(T.mean(T.neq(y, y_pred)),'float32')
+    data_loss = T.mean(T.nnet.categorical_crossentropy(p_y_given_x, y))
+    pred_error = T.mean(T.neq(T.argmax(y,axis=-1), T.argmax(p_y_given_x,axis=-1)))
     
     # backward propagation
     grad_W = T.grad(cost=data_loss, wrt=W)
@@ -153,6 +175,6 @@ def train_softmax(learning_rate = .13, n_epochs=20,
             1.*n_epochs / (end_time - start_time))
     
 if __name__ == '__main__':
-    train_softmax(n_epochs=50)
+    train_softmax(n_epochs=20)
 
 
