@@ -5,14 +5,18 @@ from ..utils.theano_utils import shared_zeros, floatX
 from .. import activations, initializations
 
 """
-# Core Layer Modual
- - A layer holds layer parameters, connections, regularizations,
-   and forward-propagation computations.
+# Core Layer Modual: The key component
+    
+    - get_output(): call get_input(), then compute forward pass and return layer output
 
- - Layer is the components container holds.
+    - get_input(): call previous-layer's forward function, this take cares of the real theano.graph construction
 
- - A Neurual Network architecture is a container holding various
-   layers.  
+    - connect(): link-list like structure, set a pointer (called self.previous) point to last layer
+
+    - get_params(): return the parameters for weights update
+
+    Recurvise calling get_output() <- get_input() <- last-layer.get_output()
+    You only need to call last layer's get_output(), then all layers's forward-pass will be called
 """
 
 class Layer(object):
@@ -22,14 +26,23 @@ class Layer(object):
     def __init__(self):
         self.params = []
 
+    def get_output(self):
+        raise NotImplementedError
+
     def get_input(self):
+        """
+        Key function to connect layers and compute forward-pass
+        """
         if hasattr(self, 'previous'):
             return self.previous.get_output()
         else:
             return self.input
 
     def get_params(self):
-        return self.params, self.regularizers
+        return self.params
+
+    def connect(self, layer):
+        self.previous = layer
 
 
 class AffineLayer(Layer):
@@ -37,7 +50,7 @@ class AffineLayer(Layer):
     Affine (fully connected) layer
     """
     def __init__(self, nb_input, nb_output, init='normal',
-            activation='linear', W_regularizer=None):
+            activation='linear'):
         super(AffineLayer, self).__init__()
         self.init = initializations.get(init)
         self.activation = activations.get(activation)
@@ -52,7 +65,6 @@ class AffineLayer(Layer):
 
         self.params = [self.W, self.b]
 
-        self.regularizers = [W_regularizer]
     
     # forward pass for the affine layer
     def get_output(self):
@@ -65,3 +77,4 @@ class AffineLayer(Layer):
                 'nb_output': self.nb_output,
                 'init': self.init.__name__,
                 'activation': self.activation.__name__}
+

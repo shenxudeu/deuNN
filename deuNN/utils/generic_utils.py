@@ -6,7 +6,7 @@ import sys
 """
 
 
-def get_from_mudule(identifier, module_params, module_name):
+def get_from_mudule(identifier, module_params, module_name, instantiate=False):
     """
     Get a function handle from module
     Inputs:
@@ -18,6 +18,8 @@ def get_from_mudule(identifier, module_params, module_name):
         res = module_params.get(identifier)
         if not res:
             raise Exception('Invalid' + module_name + ':' + identifier)
+        if instantiate:
+            return res()
         else:
             return res
     else:
