@@ -6,7 +6,7 @@ import sys
 """
 
 
-def get_from_mudule(identifier, module_params, module_name, instantiate=False):
+def get_from_module(identifier, module_params, module_name, instantiate=False):
     """
     Get a function handle from module
     Inputs:

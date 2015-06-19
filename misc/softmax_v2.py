@@ -148,7 +148,6 @@ def train_softmax(learning_rate = .13, n_epochs=20,
     )
 
 
-
     # mini-batch SGD
     print "Start training"
     start_time = time.clock()

@@ -7,6 +7,8 @@ from . import SGD
 from . import losses
 from .layers import containers
 
+import pdb
+
 class NN(containers.Sequential):
     """
     Outside Class NN: derived from sequential container
@@ -62,11 +64,10 @@ class NN(containers.Sequential):
                 outputs = [data_loss, accuracy],
                 updates = updates,
                 allow_input_downcast=True)
-        self._test = theano.funcion(
+        self._test = theano.function(
                 inputs = ins,
                 outputs = accuracy,
                 allow_input_downcast=True)
-
 
     def train(self, X, y , accuracy=False):
         ins = [X, y]
@@ -102,27 +103,26 @@ class NN(containers.Sequential):
         iter_num = 0
         acc_frequency = 200
         best_valid_acc = -np.inf
+
         for epoch in xrange(nb_epoch):
             for start, end in zip(range(0,N,batch_size), range(batch_size,N,batch_size)):
                 iter_num += 1
-                train_ins = [train_X[start:end,:], train_y[start:end,:]]
+                train_ins = [train_X[start:end], train_y[start:end]]
                 valid_ins = [valid_X, valid_y]
-                train_loss = self._train(train_ins)
+                train_loss = self._train(*train_ins)
 
                 if iter_num % acc_frequency == 0:
                     [train_loss, train_acc] = self._train_acc(*train_ins)
                     valid_acc = self._test(*valid_ins)
+                    if valid_acc > best_valid_acc:
+                        best_valid_acc = valid_acc
                     print 'Iteration %d, finish epoch %d / %d: cost %f, train: %f, val: %f'%(iter_num, epoch, nb_epoch, train_loss, train_acc, valid_acc)
                 else:
-                    train_loss = self._train(train_ins)
+                    train_loss = self._train(*train_ins)
                     if verbose:
-                        print 'Iteration %d: cost %f'%train_loss
+                        print 'Iteration %d: cost %f'%(iter_num,train_loss)
 
         end_time = time.clock()
+        print "Training finished, best validation error %f"%(best_valid_acc)
         print 'The training run for %d epochs, with %f epochs/sec'%(nb_epoch,
                 1.*nb_epoch / (end_time - start_time))
-
-
-
-
-

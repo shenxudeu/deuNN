@@ -3,7 +3,7 @@ import theano.tensor as T
 import numpy as np
 
 from .utils.theano_utils import sharedX, shared_zeros
-
+import pdb
 """
 #Initializations
  - functions to return initialized variables
@@ -13,7 +13,7 @@ from .utils.theano_utils import sharedX, shared_zeros
 """
 
 def uniform(shape, scale=1e-5):
-    return sharedX(np.random.uniform(*shape) * scale)
+    return sharedX(np.random.uniform(shape) * scale)
 
 def normal(shape, scale=1e-5):
     return sharedX(np.random.randn(*shape) * scale)

@@ -1,6 +1,7 @@
 import theano
 import theano.tensor as T
 import numpy as np
+from .utils.theano_utils import shared_scalar
 
 """
 # Optimizers: Gradient Computation and Parameter Updates
@@ -38,6 +39,6 @@ class SGD(object):
         return updates
         
 
-from .utils.generic_utils import get_from_modules
+from .utils.generic_utils import get_from_module
 def get(identifier):
-    return get_from_modules(identifier, globals(), 'SGD', instantiate=True)
+    return get_from_module(identifier, globals(), 'SGD', instantiate=True)
