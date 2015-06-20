@@ -45,6 +45,21 @@ class Layer(object):
     def get_regs(self):
         return self.regs
 
+    def get_param_vals(self):
+        """
+        get layer parameter values (tensor -> numpy)
+        """
+        param_vals = []
+        for p in self.params:
+            param_vals.append(p.get_value())
+        return param_vals
+    
+    def set_param_vals(self, param_vals):
+        for (p, pval) in zip(self.params, param_vals):
+            if p.eval().shape != pval.shape:
+                raise Exception("[Error] in set_param_vals: input numpy params has different shape of model params")
+            p.set_value(floatX(pval))
+
     def connect(self, layer):
         self.previous = layer
 

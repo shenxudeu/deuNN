@@ -130,3 +130,43 @@ class NN(containers.Sequential):
         print "Training finished, best validation error %f"%(best_valid_acc)
         print 'The training run for %d epochs, with %f epochs/sec'%(nb_epoch,
                 1.*nb_epoch / (end_time - start_time))
+
+
+    def save_model(self,filepath, overwrite=False):
+        import h5py
+        import os.path
+        if not overwrite and os.path.isfile(filepath):
+            import sys
+            get_input = input
+            if sys.version_info[:2] <= (2,7):
+                get_input = raw_input
+            overwrite = get_input('[Warning] %s already exists - overwrite? [y/n]'%filepath)
+            while overwrite not in ['y','n']:
+                overwrite = get_input('Please enter [y] yes or [n] no')
+            if overwrite == 'n':
+                return
+            print '[Tip] You can set overwrite=True next time'
+
+        f = h5py.File(filepath,'w')
+        f.attrs['nb_layers'] = len(self.layers)
+        for k, l in enumerate(self.layers):
+            g = f.create_group('layer_{}'.format(k))
+            weights = l.get_param_vals()
+            f.attrs['nb_params'] = len(weights)
+            for n, param in enumerate(weights):
+                param_name = 'param_{}'.format(n)
+                param_dset = g.create_dataset(param_name, param.shape, dtype=param.dtype)
+                param_dset[:] = param
+        f.flush()
+        f.close()
+        print 'Model saved as %s successfully!'%filepath
+    
+    def load_model(self,filepath):
+        import h5py
+        f = h5py.File(filepath,'r')
+        for k in xrange(f.attrs['nb_layers']):
+            g = f['layer_{}'.format(k)]
+            weights = [g['param_{}'.format(i)] for i in xrange(g.attrs['nb_params'])]
+            self.layers[k].set_param_vals(weights)
+        f.close()
+

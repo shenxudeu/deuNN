@@ -1,5 +1,5 @@
 """
-Example of train a softmax classifier on MNIST dataset.
+Example of train a 2-layers Neural Network classifier on MNIST dataset.
 """
 
 
@@ -16,10 +16,11 @@ from deuNN.layers.core import AffineLayer
 
 import pdb
 
-batch_size = 500
+batch_size = 50
 nb_classes = 10
 nb_epoch = 20
-learning_rate = 0.13
+learning_rate = 0.01
+nb_hidden = 500
 
 [train_set, valid_set, test_set] = mnist.load_data()
 [train_X, train_y] = train_set
@@ -39,7 +40,8 @@ test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
 model = NN()
-model.add(AffineLayer(D, nb_classes, activation='softmax',reg_W=0.0001))
+model.add(AffineLayer(D, nb_hidden, activation='sigmoid',reg_W=0.0001))
+model.add(AffineLayer(nb_hidden, nb_classes, activation='softmax',reg_W=0.0001))
 
 # Compile NN
 print 'Compile NN ...'
@@ -49,3 +51,6 @@ model.compile(optimizer='SGD', loss='categorical_crossentropy',
 # Train NN
 model.fit(train_X, train_y, valid_X, valid_y,
         batch_size=batch_size, nb_epoch=nb_epoch, verbose=False)
+
+# Save NN
+model.save_model('mnist_mlp.h5')
