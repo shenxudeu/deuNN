@@ -1,7 +1,7 @@
 import theano
 import theano.tensor as T
 
-from ..utils.theano_utils import shared_zeros, floatX
+from ..utils.theano_utils import shared_zeros, floatX, shared_scalar
 from .. import activations, initializations
 
 """
@@ -25,6 +25,7 @@ class Layer(object):
     """
     def __init__(self):
         self.params = []
+        self.regs = []
 
     def get_output(self):
         raise NotImplementedError
@@ -41,6 +42,9 @@ class Layer(object):
     def get_params(self):
         return self.params
 
+    def get_regs(self):
+        return self.regs
+
     def connect(self, layer):
         self.previous = layer
 
@@ -50,7 +54,7 @@ class AffineLayer(Layer):
     Affine (fully connected) layer
     """
     def __init__(self, nb_input, nb_output, init='normal',
-            activation='linear'):
+            activation='linear', reg_W=0.001, reg_b=0.):
         super(AffineLayer, self).__init__()
         self.init = initializations.get(init)
         self.activation = activations.get(activation)
@@ -62,8 +66,11 @@ class AffineLayer(Layer):
         
         self.W = self.init((self.nb_input, self.nb_output))
         self.b = shared_zeros((self.nb_output))
+        self.reg_W = shared_scalar(reg_W)
+        self.reg_b = shared_scalar(reg_b)
 
         self.params = [self.W, self.b]
+        self.regs   = [self.reg_W, self.reg_b]
 
     
     # forward pass for the affine layer

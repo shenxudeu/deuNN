@@ -2,6 +2,8 @@ import theano
 import theano.tensor as T
 import numpy as np
 
+from .utils.theano_utils import shared_scalar
+
 """
 # Losses: loss functions
 In the training process, once we compute the output of a neurual network
@@ -23,7 +25,7 @@ def categorical_crossentropy(py_x, y_true):
     """
     return T.mean(T.nnet.categorical_crossentropy(py_x, y_true))
 
-def L1_regloss(params, regs):
+def L1(params, regs):
     """
     compute regularization loss L1
     Inputs:
@@ -33,9 +35,19 @@ def L1_regloss(params, regs):
     Outputs:
         - regloss: tensor scalar, the reg loss value
     """
-    pass
-    #for (p, reg) in zip(params, regs):
+    reg_loss = shared_scalar(0.)
+    for (p, reg) in zip(params, regs):
+        reg_loss += reg * T.sum(abs(p))
+    return reg_loss
 
+def L2(params, regs):
+    """
+    compute L2 regularization loss
+    """
+    reg_loss = shared_scalar(0.)
+    for (p, reg) in zip(params, regs):
+        reg_loss += reg * T.sum(p**2)
+    return reg_loss
 
 
 from .utils.generic_utils import get_from_module

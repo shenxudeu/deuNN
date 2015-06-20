@@ -41,4 +41,4 @@ class SGD(object):
 
 from .utils.generic_utils import get_from_module
 def get(identifier):
-    return get_from_module(identifier, globals(), 'SGD', instantiate=True)
+    return get_from_module(identifier, globals(), 'optimizers', instantiate=True)

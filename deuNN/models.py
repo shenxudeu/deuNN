@@ -3,7 +3,7 @@ import theano.tensor as T
 import numpy as np
 import time
 
-from . import SGD
+from . import optimizers
 from . import losses
 from .layers import containers
 
@@ -18,6 +18,7 @@ class NN(containers.Sequential):
     def __init__(self):
         self.layers = []
         self.params = []
+        self.regs = []
 
     def get_config(self):
         configs = {}
@@ -25,7 +26,7 @@ class NN(containers.Sequential):
             configs['layer-i'] = l.get_config()
         return configs
 
-    def compile(self, optimizer, loss, learning_rate = 0.01,
+    def compile(self, optimizer, loss, reg_type='L2', learning_rate = 0.01,
             class_mode="categorical"):
         """
         Build and compile theano graph functions
@@ -33,9 +34,10 @@ class NN(containers.Sequential):
             - optimizer: str, SGD method
             - loss: str, loss function method
         """
-        self.optimizer = SGD.get(optimizer)
+        self.optimizer = optimizers.get(optimizer)
         self.optimizer.set_lr(learning_rate)
         self.data_loss = losses.get(loss)
+        self.reg_loss = losses.get(reg_type)
 
         # NN input and output
         self.X    = self.get_input()
@@ -43,6 +45,8 @@ class NN(containers.Sequential):
         self.y    = T.zeros_like(self.py_x)
 
         data_loss = self.data_loss(self.py_x, self.y)
+        reg_loss = self.reg_loss(self.params, self.regs)
+        total_loss = data_loss + reg_loss
 
         if class_mode == 'categorical':
             accuracy = T.mean(T.eq(T.argmax(self.y, axis=-1),
@@ -56,12 +60,12 @@ class NN(containers.Sequential):
 
         self._train = theano.function(
                 inputs = ins,
-                outputs = data_loss,
+                outputs = total_loss,
                 updates = updates,
                 allow_input_downcast=True)
         self._train_acc = theano.function(
                 inputs = ins,
-                outputs = [data_loss, accuracy],
+                outputs = [total_loss, accuracy],
                 updates = updates,
                 allow_input_downcast=True)
         self._test = theano.function(

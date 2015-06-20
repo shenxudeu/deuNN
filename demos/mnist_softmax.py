@@ -38,14 +38,15 @@ train_y = np_utils.one_hot(train_y,nb_classes)
 valid_y = np_utils.one_hot(valid_y,nb_classes)
 test_y = np_utils.one_hot(test_y,nb_classes)
 
-
+# NN architecture
 model = NN()
-model.add(AffineLayer(D, nb_classes, activation='softmax'))
+model.add(AffineLayer(D, nb_classes, activation='softmax',reg_W=0.0001))
 
+# Compile NN
 print 'Compile NN ...'
 model.compile(optimizer='SGD', loss='categorical_crossentropy',
-        learning_rate=learning_rate)
+        reg_type='L2', learning_rate=learning_rate)
 
+# Train NN
 model.fit(train_X, train_y, valid_X, valid_y,
         batch_size=batch_size, nb_epoch=nb_epoch, verbose=False)
-

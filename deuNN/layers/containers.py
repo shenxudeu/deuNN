@@ -11,6 +11,7 @@ class Sequential(Layer):
     def __init__(self, layers=[]):
         self.layers = []
         self.params = []
+        self.regs = []
         for layer in layers:
             self.add(layer)
 
@@ -23,7 +24,9 @@ class Sequential(Layer):
             self.layers[-1].connect(self.layers[-2])
 
         params = layer.get_params()
+        regs = layer.get_regs()
         self.params += params
+        self.regs += regs
 
     def get_output(self):
         """
