@@ -130,7 +130,11 @@ class NN(containers.Sequential):
         print "Training finished, best validation error %f"%(best_valid_acc)
         print 'The training run for %d epochs, with %f epochs/sec'%(nb_epoch,
                 1.*nb_epoch / (end_time - start_time))
+    
 
+    def get_test_accuracy(self, X, y):
+        test_acc = self.test(X, y)
+        print 'Testing Accuracy %f'%test_acc
 
     def save_model(self,filepath, overwrite=False):
         import h5py
