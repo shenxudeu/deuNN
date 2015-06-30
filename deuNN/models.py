@@ -5,6 +5,7 @@ import time
 
 from . import optimizers
 from . import losses
+from . import callbacks as cbks
 from .layers import containers
 
 import pdb
@@ -107,25 +108,37 @@ class NN(containers.Sequential):
         iter_num = 0
         acc_frequency = 200
         best_valid_acc = -np.inf
-
+        
+        train_params = {'verbose':True,'nb_samples':N}
+        logger = cbks.baseLogger()
+        logger.on_train_begin(train_params)
+        
+        valid_ins = [valid_X, valid_y]
         for epoch in xrange(nb_epoch):
+            logger.on_epoch_begin(epoch)
             for start, end in zip(range(0,N,batch_size), range(batch_size,N,batch_size)):
                 iter_num += 1
+                logger.on_batch_begin(iter_num)
                 train_ins = [train_X[start:end], train_y[start:end]]
-                valid_ins = [valid_X, valid_y]
-                train_loss = self._train(*train_ins)
-
+                #valid_ins = [valid_X, valid_y]
+                #train_loss = self._train(*train_ins)
+                
                 if iter_num % acc_frequency == 0:
                     [train_loss, train_acc] = self._train_acc(*train_ins)
                     valid_acc = self._test(*valid_ins)
                     if valid_acc > best_valid_acc:
                         best_valid_acc = valid_acc
-                    print 'Iteration %d, finish epoch %d / %d: cost %f, train: %f, val: %f'%(iter_num, epoch, nb_epoch, train_loss, train_acc, valid_acc)
+                    #print 'Iteration %d, finish epoch %d / %d: cost %f, train: %f, val: %f'%(iter_num, epoch, nb_epoch, train_loss, train_acc, valid_acc)
                 else:
                     train_loss = self._train(*train_ins)
-                    if verbose:
-                        print 'Iteration %d: cost %f'%(iter_num,train_loss)
-
+                    train_acc = 0.
+                    if 1:
+                        print '\nIteration %d: cost %f\n'%(iter_num,train_loss)
+                
+                batch_logs = {'loss':train_loss, 'size':batch_size}
+                batch_logs['accuracy'] = train_acc
+                logger.on_batch_end(iter_num, batch_logs)
+                pdb.set_trace()
         end_time = time.clock()
         print "Training finished, best validation error %f"%(best_valid_acc)
         print 'The training run for %d epochs, with %f epochs/sec'%(nb_epoch,
