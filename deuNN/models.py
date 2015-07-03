@@ -69,6 +69,10 @@ class NN(containers.Sequential):
                 outputs = [total_loss, accuracy],
                 updates = updates,
                 allow_input_downcast=True)
+        self._get_acc_loss = theano.function(
+                inputs = ins,
+                outputs = [total_loss, accuracy],
+                allow_input_downcast = True)
         self._test = theano.function(
                 inputs = ins,
                 outputs = accuracy,
@@ -106,12 +110,12 @@ class NN(containers.Sequential):
         print 'Start Training'
         start_time = time.clock()
         iter_num = 0
-        acc_frequency = 200
+        #acc_frequency = 200
         best_valid_acc = -np.inf
         
-        train_params = {'verbose':True,'nb_samples':N}
-        logger = cbks.baseLogger()
-        logger.on_train_begin(train_params)
+        train_params = {'verbose':verbose,'nb_samples':N}
+        logger = cbks.baseLogger(train_params)
+        #logger.on_train_begin(train_params)
         
         valid_ins = [valid_X, valid_y]
         for epoch in xrange(nb_epoch):
@@ -122,23 +126,35 @@ class NN(containers.Sequential):
                 train_ins = [train_X[start:end], train_y[start:end]]
                 #valid_ins = [valid_X, valid_y]
                 #train_loss = self._train(*train_ins)
-                
-                if iter_num % acc_frequency == 0:
+                if verbose:
                     [train_loss, train_acc] = self._train_acc(*train_ins)
-                    valid_acc = self._test(*valid_ins)
-                    if valid_acc > best_valid_acc:
-                        best_valid_acc = valid_acc
-                    #print 'Iteration %d, finish epoch %d / %d: cost %f, train: %f, val: %f'%(iter_num, epoch, nb_epoch, train_loss, train_acc, valid_acc)
                 else:
                     train_loss = self._train(*train_ins)
-                    train_acc = 0.
-                    if 1:
-                        print '\nIteration %d: cost %f\n'%(iter_num,train_loss)
+                    train_acc = np.nan
+                batch_logs = {'loss':train_loss, 'size':batch_size}
+                batch_logs['accuracy'] = train_acc
+                logger.on_batch_end(iter_num, batch_logs)
+                                      
+                #if iter_num % acc_frequency == 0:
+                #    [train_loss, train_acc] = self._train_acc(*train_ins)
+                #    valid_acc = self._test(*valid_ins)
+                #    if valid_acc > best_valid_acc:
+                #        best_valid_acc = valid_acc
+                #    #print 'Iteration %d, finish epoch %d / %d: cost %f, train: %f, val: %f'%(iter_num, epoch, nb_epoch, train_loss, train_acc, valid_acc)
+                #else:
+                #    train_loss = self._train(*train_ins)
+                #    train_acc = 0.
+                #    if 1:
+                #        print '\nIteration %d: cost %f\n'%(iter_num,train_loss)
                 
                 batch_logs = {'loss':train_loss, 'size':batch_size}
                 batch_logs['accuracy'] = train_acc
                 logger.on_batch_end(iter_num, batch_logs)
-                pdb.set_trace()
+            [valid_loss, valid_acc] = self._get_acc_loss(*valid_ins)
+            if valid_acc > best_valid_acc:
+                best_valid_acc = valid_acc
+            epoch_logs = {'val_loss':valid_loss, 'val_acc':valid_acc}
+            logger.on_epoch_end(epoch, epoch_logs)
         end_time = time.clock()
         print "Training finished, best validation error %f"%(best_valid_acc)
         print 'The training run for %d epochs, with %f epochs/sec'%(nb_epoch,

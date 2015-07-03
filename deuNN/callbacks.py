@@ -34,22 +34,30 @@ class CallBack(object):
         pass
 
 class baseLogger(CallBack):
-    def on_train_begin(self, params):
+    def __init__(self, params):
+        
         self._set_params(params)
         self.verbose = self.params['verbose']
+    #def on_train_begin(self, params):
+    #    self._set_params(params)
+    #    self.verbose = self.params['verbose']
 
     def on_epoch_begin(self, epoch):
         if self.verbose:
             print "Epoch %d "%epoch
             self.progbar = Progbar(target=self.params['nb_samples'],
                     verbose=self.verbose)
-        self.current,self.tot_loss, self.tot_acc = 0, 0., 0.
+            self.current,self.tot_loss, self.tot_acc = 0, 0., 0.
 
     def on_batch_begin(self, batch):
+        if not self.verbose:
+            return
         if self.current < self.params['nb_samples']:
             self.log_values = []
     
     def on_batch_end(self, batch,logs={}):
+        if not self.verbose:
+            return
         batch_size = logs.get('size', 0)
         self.current += batch_size
 
@@ -64,6 +72,8 @@ class baseLogger(CallBack):
             self.progbar.update(self.current, self.log_values)
 
     def on_epoch_end(self, epoch, logs={}):
+        if not self.verbose:
+            return
         self.log_values.append(('loss', self.tot_loss / self.current))
         self.log_values.append(('acc.', self.tot_acc / self.current))
         self.log_values.append(('val_loss', logs.get('val_loss')))

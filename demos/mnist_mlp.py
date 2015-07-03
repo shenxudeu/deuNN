@@ -52,7 +52,7 @@ model.compile(optimizer='SGD', loss='categorical_crossentropy',
 
 # Train NN
 model.fit(train_X, train_y, valid_X, valid_y,
-        batch_size=batch_size, nb_epoch=nb_epoch, verbose=False)
+        batch_size=batch_size, nb_epoch=nb_epoch, verbose=True)
 
 # Test NN
 model.get_test_accuracy(test_X, test_y)
