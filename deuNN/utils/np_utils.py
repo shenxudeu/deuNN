@@ -9,4 +9,12 @@ def one_hot(y, nb_classes=None):
     Y[np.arange(N),y] = 1.
     return Y
 
+def np_softmax(X):
+    """
+    numpy version of softmax
+    X: np.array, nb_samples * nb_features 
+    """
+    e_x = np.exp(X - X.max(axis=1,keepdims=True))
+    out = e_x / e_x.sum(axis=1, keepdims=True)
+    return out
 

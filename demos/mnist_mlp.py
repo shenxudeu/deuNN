@@ -12,7 +12,7 @@ sys.path.append('../../deuNN/')
 from deuNN.utils import np_utils
 from deuNN.datasets import mnist
 from deuNN.models import NN
-from deuNN.layers.core import AffineLayer
+from deuNN.layers.core import AffineLayer,Dropout
 
 import pdb
 
@@ -20,6 +20,7 @@ batch_size = 50
 nb_classes = 10
 nb_epoch = 10
 learning_rate = 0.05
+reg_W = 0.001
 nb_hidden1 = 500
 nb_hidden2 = 500
 
@@ -41,9 +42,11 @@ test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
 model = NN()
-model.add(AffineLayer(D, nb_hidden1, activation='sigmoid',reg_W=0.0001))
-model.add(AffineLayer(nb_hidden1, nb_hidden2, activation='sigmoid',reg_W=0.0001))
-model.add(AffineLayer(nb_hidden2, nb_classes, activation='softmax',reg_W=0.0001))
+model.add(AffineLayer(D, nb_hidden1, activation='sigmoid',reg_W=reg_W))
+model.add(Dropout(0.5,nb_hidden1, uncertainty=True))
+model.add(AffineLayer(nb_hidden1, nb_hidden2, activation='sigmoid',reg_W=reg_W))
+#model.add(Dropout(0.9,nb_hidden2, uncertainty=True))
+model.add(AffineLayer(nb_hidden2, nb_classes, activation='softmax',reg_W=reg_W))
 
 # Compile NN
 print 'Compile NN ...'
@@ -56,6 +59,7 @@ model.fit(train_X, train_y, valid_X, valid_y,
 
 # Test NN
 model.get_test_accuracy(test_X, test_y)
+#model.predict_uncertainty(test_X, 50)
 
 # Save NN
 model.save_model('mnist_mlp.h5')

@@ -1,8 +1,13 @@
 import theano
 import theano.tensor as T
+import numpy as np
 
 from ..utils.theano_utils import shared_zeros, floatX, shared_scalar
 from .. import activations, initializations
+
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+srng = RandomStreams(seed=np.random.randint(10e6))
+import pdb
 
 """
 # Core Layer Modual: The key component
@@ -27,15 +32,15 @@ class Layer(object):
         self.params = []
         self.regs = []
 
-    def get_output(self):
+    def get_output(self,train=False):
         raise NotImplementedError
 
-    def get_input(self):
+    def get_input(self,train=False):
         """
         Key function to connect layers and compute forward-pass
         """
         if hasattr(self, 'previous'):
-            return self.previous.get_output()
+            return self.previous.get_output(train)
         else:
             return self.input
 
@@ -83,20 +88,60 @@ class AffineLayer(Layer):
         self.b = shared_zeros((self.nb_output))
         self.reg_W = shared_scalar(reg_W)
         self.reg_b = shared_scalar(reg_b)
-
         self.params = [self.W, self.b]
         self.regs   = [self.reg_W, self.reg_b]
 
     
     # forward pass for the affine layer
-    def get_output(self):
-        X = self.get_input()
+    def get_output(self,train=False):
+        X = self.get_input(train)
         return self.activation(T.dot(X,self.W) + self.b)
+
+    # forward pass without activation
+    # This is used to get score before softmax
+    def get_output_score(self, train=False):
+        X = self.get_input(train)
+        return T.dot(X,self.W) + self.b
+
 
     def get_config(self):
         return {'name': self.__class__.__name__,
                 'nb_input': self.nb_input,
                 'nb_output': self.nb_output,
                 'init': self.init.__name__,
-                'activation': self.activation.__name__}
+                'activation': self.activation.__name__,
+                'reg_W': self.reg_W}
+
+class Dropout(Layer):
+    """
+    Dropout Layer
+    Reference: http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf
+    """
+    def __init__(self, p, nb_input, uncertainty = False):
+        """
+        p: floatX, percentage of neurons want to drop, higher this value, more to drop
+        uncertainty: Yarin Gal's Gaussian process uncertainty estimation
+
+        Reference: http://mlg.eng.cam.ac.uk/yarin/blog_3d801aa532c1ce.html
+        """
+        super(Dropout, self).__init__()
+        self.p = p
+        self.uncertainty = uncertainty
+        self.nb_input = nb_input
+        #self.nb_output = nb_output
+
+    def get_output(self, train=False):
+        X = self.get_input(train)
+        assert self.p >= 0
+        retain_prob = 1. - self.p
+        if train:
+            X *= srng.binomial((self.nb_input,), p=retain_prob, dtype=theano.config.floatX) / retain_prob
+        elif not train and self.uncertainty:
+            X *= srng.binomial((self.nb_input,), p=retain_prob, dtype=theano.config.floatX) / retain_prob
+        
+        return X
+
+    def get_config(self):
+        return {"name":self.__class__.__name__,
+                "p":self.p}
 

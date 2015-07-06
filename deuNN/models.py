@@ -24,8 +24,21 @@ class NN(containers.Sequential):
     def get_config(self):
         configs = {}
         for (i,l) in enumerate(self.layers):
-            configs['layer-i'] = l.get_config()
+            configs['layer-%d'%i] = l.get_config()
         return configs
+
+    def get_lr(self):
+        return self.learning_rate
+    
+    def get_w_decay(self):
+        config = self.get_config()
+        w_decay = 0.
+        for (i,l) in enumerate(self.layers):
+            if 'reg_W' in config['layer-%d'%i]:
+                wd = config['layer-%d'%i]['reg_W'].get_value()/1.
+                if w_decay < wd:
+                    w_decay = wd
+        return w_decay + 1e-12
 
     def compile(self, optimizer, loss, reg_type='L2', learning_rate = 0.01,
             class_mode="categorical"):
@@ -35,47 +48,66 @@ class NN(containers.Sequential):
             - optimizer: str, SGD method
             - loss: str, loss function method
         """
+        self.learning_rate = learning_rate
         self.optimizer = optimizers.get(optimizer)
         self.optimizer.set_lr(learning_rate)
         self.data_loss = losses.get(loss)
         self.reg_loss = losses.get(reg_type)
 
         # NN input and output
-        self.X    = self.get_input()
-        self.py_x = self.get_output()
-        self.y    = T.zeros_like(self.py_x)
+        self.X_train    = self.get_input(train=True)
+        self.X_test    = self.get_input(train=False)
+        self.py_x_train = self.get_output(train=True)
+        self.py_x_test = self.get_output(train=False)
+        
+        # output score instead of probs
+        self.sy_x_test = self.get_output_score(train=False)
 
-        data_loss = self.data_loss(self.py_x, self.y)
-        reg_loss = self.reg_loss(self.params, self.regs)
-        total_loss = data_loss + reg_loss
+        self.y    = T.zeros_like(self.py_x_train)
+        
+        data_loss_train = self.data_loss(self.py_x_train, self.y)
+        reg_loss_train = self.reg_loss(self.params, self.regs)
+        total_loss_train = data_loss_train + reg_loss_train
+        
+        data_loss_test = self.data_loss(self.py_x_test, self.y)
+        reg_loss_test = self.reg_loss(self.params, self.regs)
+        total_loss_test = data_loss_test + reg_loss_test
 
         if class_mode == 'categorical':
-            accuracy = T.mean(T.eq(T.argmax(self.y, axis=-1),
-                                   T.argmax(self.py_x, axis=-1)))
+            accuracy_train = T.mean(T.eq(T.argmax(self.y, axis=-1),
+                                   T.argmax(self.py_x_train, axis=-1)))
+            accuracy_test = T.mean(T.eq(T.argmax(self.y, axis=-1),
+                                   T.argmax(self.py_x_test, axis=-1)))
         
         self.class_mode = class_mode
 
-        updates = self.optimizer.get_updates(data_loss, self.params)
+        updates = self.optimizer.get_updates(total_loss_train, self.params)
 
-        ins = [self.X, self.y]
+        ins_train = [self.X_train, self.y]
+        ins_test = [self.X_test, self.y]
 
         self._train = theano.function(
-                inputs = ins,
-                outputs = total_loss,
+                inputs = ins_train,
+                outputs = total_loss_train,
                 updates = updates,
                 allow_input_downcast=True)
         self._train_acc = theano.function(
-                inputs = ins,
-                outputs = [total_loss, accuracy],
+                inputs = ins_train,
+                outputs = [total_loss_train, accuracy_train],
                 updates = updates,
                 allow_input_downcast=True)
         self._get_acc_loss = theano.function(
-                inputs = ins,
-                outputs = [total_loss, accuracy],
+                inputs = ins_test,
+                outputs = [total_loss_test, accuracy_test],
                 allow_input_downcast = True)
         self._test = theano.function(
-                inputs = ins,
-                outputs = accuracy,
+                inputs = ins_test,
+                outputs = accuracy_test,
+                allow_input_downcast=True)
+
+        self._test_score = theano.function(
+                inputs = [self.X_test],
+                outputs = self.sy_x_test,
                 allow_input_downcast=True)
 
     def train(self, X, y , accuracy=False):
@@ -88,6 +120,30 @@ class NN(containers.Sequential):
     def test(self, X, y):
         ins = [X,y]
         return self._test(*ins)
+
+    def predict_uncertainty(self, X, nb_resample):
+        """
+        Implementation of Yarin Gal's Bayesian Neural network outputs
+        http://mlg.eng.cam.ac.uk/yarin/blog_3d801aa532c1ce.html
+        """
+        from .utils.np_utils import np_softmax
+        probs = []
+        for _ in xrange(nb_resample):
+            probs += [self._test_score(X)]
+        predictive_mean = np.mean(probs, axis=0)
+        predictive_variance = np.var(probs, axis=0)
+        tau = self.get_lr() / self.get_w_decay()
+        predictive_variance += tau**-1
+        predictive_std = np.sqrt(predictive_variance)
+        
+        if self.class_mode == "categorical":
+            # hard code softmax here, assume softmax conversion for all classifications
+            pred_prob_mean = np_softmax(predictive_mean)
+            pred_prob_ps1std = np_softmax(predictive_mean+predictive_std)
+            pred_prob_ms1std = np_softmax(predictive_mean-predictive_std)
+            return predictive_mean, predictive_std, pred_prob_mean
+        
+        return predictive_mean, predictive_std
 
     def fit(self, train_X, train_y, valid_X, valid_y,
             batch_size=50, nb_epoch=20, verbose=True):

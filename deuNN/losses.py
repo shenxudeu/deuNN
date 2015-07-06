@@ -14,6 +14,9 @@ In the training process, once we compute the output of a neurual network
   for regression problem.
 """
 
+#######################################
+## Loss Function for Classification  ##
+#######################################
 def categorical_crossentropy(py_x, y_true):
     """
     calculate cross entropy loss
@@ -25,6 +28,31 @@ def categorical_crossentropy(py_x, y_true):
     """
     return T.mean(T.nnet.categorical_crossentropy(py_x, y_true))
 
+
+##################################
+## Loss Function for Regression ##
+##################################
+def euclidean_loss(y_pred, y_true):
+    """
+    Compute euclidean loss on 1 dim
+    Reference: http://mlg.eng.cam.ac.uk/yarin/blog_3d801aa532c1ce.html 
+    section: Dropout and Deep Models
+    """
+    return T.abs_(y_pred - y_true).mean(axis=-1)/2.
+
+def mean_squared_error(y_pred, y_true):
+    return T.sqrt(y_pred - y_true).mean(axis=-1)
+
+def mean_absolute_error(y_pred, y_true):
+    """
+    Almost the same as euclidean loss
+    """
+    return T.abs_(y_pred - y_true).mean(axis=-1)
+
+
+#########################
+## Regularization Loss ##
+#########################
 def L1(params, regs):
     """
     compute regularization loss L1

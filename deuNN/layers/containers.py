@@ -28,11 +28,14 @@ class Sequential(Layer):
         self.params += params
         self.regs += regs
 
-    def get_output(self):
+    def get_output(self,train=False):
         """
         call the last-layer's output, light up all layer's forward-pass
         """
-        return self.layers[-1].get_output()
+        return self.layers[-1].get_output(train)
 
-    def get_input(self):
-        return self.layers[0].get_input()
+    def get_output_score(self, train=False):
+        return self.layers[-1].get_output_score(train)
+
+    def get_input(self,train=False):
+        return self.layers[0].get_input(train)
