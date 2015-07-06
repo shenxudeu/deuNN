@@ -74,7 +74,7 @@ class AffineLayer(Layer):
     Affine (fully connected) layer
     """
     def __init__(self, nb_input, nb_output, init='normal',
-            activation='linear', reg_W=0.001, reg_b=0.):
+            activation='linear', reg_W=0.001, reg_b=0.,w_scale=1e-5):
         super(AffineLayer, self).__init__()
         self.init = initializations.get(init)
         self.activation = activations.get(activation)
@@ -84,7 +84,7 @@ class AffineLayer(Layer):
         # this symbolic variable will be used if this is the first layer
         self.input = T.matrix('input',dtype=theano.config.floatX)
         
-        self.W = self.init((self.nb_input, self.nb_output))
+        self.W = self.init((self.nb_input, self.nb_output),w_scale)
         self.b = shared_zeros((self.nb_output))
         self.reg_W = shared_scalar(reg_W)
         self.reg_b = shared_scalar(reg_b)
