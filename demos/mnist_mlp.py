@@ -18,7 +18,7 @@ import pdb
 
 batch_size = 50
 nb_classes = 10
-nb_epoch = 100
+nb_epoch = 10
 learning_rate = 0.05
 nb_hidden1 = 500
 nb_hidden2 = 500
