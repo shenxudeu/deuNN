@@ -38,16 +38,19 @@ def euclidean_loss(y_pred, y_true):
     Reference: http://mlg.eng.cam.ac.uk/yarin/blog_3d801aa532c1ce.html 
     section: Dropout and Deep Models
     """
-    return T.abs_(y_pred - y_true).mean(axis=-1)/2.
+    #return T.mean(T.abs_(T.max(y_pred,axis=1) - y_true))/2.
+    return T.mean(T.abs_(y_pred - y_true))/2.
 
 def mean_squared_error(y_pred, y_true):
-    return T.sqrt(y_pred - y_true).mean(axis=-1)
+    #return T.mean(T.sqrt(T.max(y_pred,axis=1) - y_true))
+    return T.mean(T.sqrt(y_pred - y_true))
 
 def mean_absolute_error(y_pred, y_true):
     """
     Almost the same as euclidean loss
     """
-    return T.abs_(y_pred - y_true).mean(axis=-1)
+    #return T.mean(T.abs_(T.max(y_pred,axis=1) - y_true))
+    return T.mean(T.abs_(y_pred - y_true))
 
 
 #########################

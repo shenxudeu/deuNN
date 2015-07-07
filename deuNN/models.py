@@ -62,9 +62,11 @@ class NN(containers.Sequential):
         
         # output score instead of probs
         self.sy_x_test = self.get_output_score(train=False)
-
-        self.y    = T.zeros_like(self.py_x_train)
         
+        #if class_mode == "categorical":
+        self.y    = T.zeros_like(self.py_x_train)
+
+
         data_loss_train = self.data_loss(self.py_x_train, self.y)
         reg_loss_train = self.reg_loss(self.params, self.regs)
         total_loss_train = data_loss_train + reg_loss_train
@@ -78,6 +80,10 @@ class NN(containers.Sequential):
                                    T.argmax(self.py_x_train, axis=-1)))
             accuracy_test = T.mean(T.eq(T.argmax(self.y, axis=-1),
                                    T.argmax(self.py_x_test, axis=-1)))
+        elif class_mode == 'regression':
+            acc_func = losses.get('mean_absolute_error')
+            accuracy_train = acc_func(self.py_x_train,self.y)
+            accuracy_test = acc_func(self.py_x_test, self.y)
         
         self.class_mode = class_mode
 
@@ -110,6 +116,11 @@ class NN(containers.Sequential):
                 outputs = self.sy_x_test,
                 allow_input_downcast=True)
 
+        self._get_output = theano.function(
+                inputs = [self.X_test],
+                outputs = self.py_x_test,
+                allow_input_downcast=True)
+
     def train(self, X, y , accuracy=False):
         ins = [X, y]
         if accuracy:
@@ -120,6 +131,9 @@ class NN(containers.Sequential):
     def test(self, X, y):
         ins = [X,y]
         return self._test(*ins)
+
+    def predict(self, X):
+        return self._get_output(X)
 
     def predict_uncertainty(self, X, nb_resample):
         """
