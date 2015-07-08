@@ -1,7 +1,7 @@
 import theano
 import theano.tensor as T
 import numpy as np
-from .utils.theano_utils import shared_scalar
+from .utils.theano_utils import shared_scalar, shared_zeros
 
 """
 # Optimizers: Gradient Computation and Parameter Updates
@@ -17,12 +17,25 @@ class SGD(object):
     """
     abstract object: stocastic graident descent optimization method
     """
-    def __init__(self, lr=0.01):
+    def __init__(self, lr=0.01, momentum=None,decay=None,nesterov=None):
         self.lr = lr
         self.iterations = shared_scalar(0.)
+        self.momentum = momentum
+        self.decay = decay
+        self.nesterov = nesterov
     
     def set_lr(self, lr=0.01):
         self.lr = lr
+
+    def set_momentum(self, momentum=0.9):
+        self.momentum = momentum
+
+    def set_lr_decay(self, decay=0.99):
+        self.decay = decay
+
+    def set_nesterov(self, nesterov=True,momentum=0.9):
+        self.momentum = momentum
+        self.nesterov = nesterov
 
     def get_gradients(self, loss, params):
         grads = T.grad(loss, params)
@@ -31,10 +44,25 @@ class SGD(object):
 
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
+        if self.decay is not None:
+            lr = self.lr * (1. / (1. + self.decay * self.iterations))
+        else:
+            lr = self.lr
         updates = [(self.iterations, self.iterations+1.)]
 
         for p, g in zip(params, grads):
-            updates.append((p, p - self.lr * g))
+            if self.momentum is not None:
+                m = shared_zeros(p.get_value().shape)
+                v = self.momentum * m - lr * g
+                update.append((m, v))
+            else:
+                v = -lr * g
+            
+            if self.nesterov is not None:
+                update.append(p + self.momentum * v - lr * g)
+            else:
+                #updates.append((p, p - lr * g))
+                update.append((p, p + v))
 
         return updates
         
