@@ -41,7 +41,8 @@ class NN(containers.Sequential):
         return w_decay + 1e-12
 
     def compile(self, optimizer, loss, reg_type='L2', learning_rate = 0.01,
-            class_mode="categorical"):
+            class_mode="categorical",momentum=None,lr_decay=None,
+            nesterov=False):
         """
         Build and compile theano graph functions
         Inputs:
@@ -51,6 +52,10 @@ class NN(containers.Sequential):
         self.learning_rate = learning_rate
         self.optimizer = optimizers.get(optimizer)
         self.optimizer.set_lr(learning_rate)
+        self.optimizer.set_momentum(momentum)
+        self.optimizer.set_lr_decay(lr_decay)
+        #self.optimizer.set_nesterov(nesterov, momentum)
+
         self.data_loss = losses.get(loss)
         self.reg_loss = losses.get(reg_type)
 

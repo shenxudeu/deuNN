@@ -36,6 +36,8 @@ class SGD(object):
     def set_nesterov(self, nesterov=True,momentum=0.9):
         self.momentum = momentum
         self.nesterov = nesterov
+        if nesterov and momentum is None:
+            raise ValueError('Use Nesterov, you must set momentum value')
 
     def get_gradients(self, loss, params):
         grads = T.grad(loss, params)
@@ -54,15 +56,15 @@ class SGD(object):
             if self.momentum is not None:
                 m = shared_zeros(p.get_value().shape)
                 v = self.momentum * m - lr * g
-                update.append((m, v))
+                updates.append((m, v))
             else:
                 v = -lr * g
             
-            if self.nesterov is not None:
-                update.append(p + self.momentum * v - lr * g)
+            if self.nesterov:
+                updates.append(p + self.momentum * v - lr * g)
             else:
                 #updates.append((p, p - lr * g))
-                update.append((p, p + v))
+                updates.append((p, p + v))
 
         return updates
         
