@@ -28,6 +28,8 @@ reg_W = 0.001
 nb_hidden1 = 500
 nb_hidden2 = 500
 
+checkpoint_fn = '.trained_net.h5'
+
 [train_set, valid_set, test_set] = mnist.load_data()
 [train_X, train_y] = train_set
 [valid_X, valid_y] = valid_set
@@ -45,7 +47,7 @@ valid_y = np_utils.one_hot(valid_y,nb_classes)
 test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
-model = NN()
+model = NN(checkpoint_fn)
 model.add(AffineLayer(D, nb_hidden1, activation='sigmoid',reg_W=reg_W))
 model.add(Dropout(0.2,nb_hidden1, uncertainty=True))
 model.add(AffineLayer(nb_hidden1, nb_hidden2, activation='sigmoid',reg_W=reg_W))
@@ -67,4 +69,4 @@ model.get_test_accuracy(test_X, test_y)
 #model.predict_uncertainty(test_X, 50)
 
 # Save NN
-model.save_model('mnist_mlp.h5')
+#model.save_model('mnist_mlp.h5')

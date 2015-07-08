@@ -16,10 +16,11 @@ class NN(containers.Sequential):
     compile theano graph funtions
     get updates and SGD, fit model with input data
     """
-    def __init__(self):
+    def __init__(self, checkpoint_fn=None):
         self.layers = []
         self.params = []
         self.regs = []
+        self.checkpoint_fn = checkpoint_fn
 
     def get_config(self):
         configs = {}
@@ -143,7 +144,7 @@ class NN(containers.Sequential):
     def predict(self, X):
         return self._get_output(X)
 
-    def predict_uncertainty(self, X, nb_resample):
+    def predict_uncertainty(self, X, nb_resample,beforeActivation=True):
         """
         Implementation of Yarin Gal's Bayesian Neural network outputs
         http://mlg.eng.cam.ac.uk/yarin/blog_3d801aa532c1ce.html
@@ -151,7 +152,10 @@ class NN(containers.Sequential):
         from .utils.np_utils import np_softmax
         probs = []
         for _ in xrange(nb_resample):
-            probs += [self._test_score(X)]
+            if beforeActivation:
+                probs += [self._test_score(X)]
+            else:
+                probs += [self._get_output(X)]
         predictive_mean = np.mean(probs, axis=0)
         predictive_variance = np.var(probs, axis=0)
         tau = self.get_lr() / self.get_w_decay()
@@ -180,6 +184,7 @@ class NN(containers.Sequential):
             - nb_epoch: int, number of epoch
             - verbose: bool
         """
+        self.verbose=verbose
         (N, D) = train_X.shape
         print 'Training Data: %d x %d'%(N, D)
         print 'Validation Data: %d x %d'%(valid_X.shape[0], valid_X.shape[1])
@@ -193,6 +198,8 @@ class NN(containers.Sequential):
         train_params = {'verbose':verbose,'nb_samples':N,'nb_epoch':nb_epoch}
         logger = cbks.baseLogger(train_params)
         history_log = cbks.History(train_params)
+        if self.checkpoint_fn is not None:
+            checkpoint = cbks.ModelCheckPoint(self.checkpoint_fn,self)
         history_log.on_train_begin()
         
         valid_ins = [valid_X, valid_y]
@@ -215,6 +222,8 @@ class NN(containers.Sequential):
             epoch_logs = {'val_loss':valid_loss, 'val_acc':valid_acc}
             logger.on_epoch_end(epoch, epoch_logs)
             history_log.on_epoch_end(epoch,epoch_logs)
+            if self.checkpoint_fn is not None:
+                checkpoint.on_epoch_end(epoch,epoch_logs,verbose=verbose)
         history_log.on_train_end()
         end_time = time.clock()
         print "Training finished, best validation error %f"%(best_valid_acc)
@@ -246,14 +255,15 @@ class NN(containers.Sequential):
         for k, l in enumerate(self.layers):
             g = f.create_group('layer_{}'.format(k))
             weights = l.get_param_vals()
-            f.attrs['nb_params'] = len(weights)
+            g.attrs['nb_params'] = len(weights)
             for n, param in enumerate(weights):
                 param_name = 'param_{}'.format(n)
                 param_dset = g.create_dataset(param_name, param.shape, dtype=param.dtype)
                 param_dset[:] = param
         f.flush()
         f.close()
-        print 'Model saved as %s successfully!'%filepath
+        if self.verbose:
+            print 'Model saved as %s successfully!'%filepath
     
     def load_model(self,filepath):
         import h5py

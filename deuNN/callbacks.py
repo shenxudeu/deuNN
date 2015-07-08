@@ -136,16 +136,17 @@ class History(CallBack):
 
 class ModelCheckPoint(CallBack):
     def __init__(self, fname, model):
-        super(Callback, self).__init__()
+        super(ModelCheckPoint, self).__init__()
         self.model = model
         self.fname = fname
         self.loss = []
         self.best_loss = np.Inf
         self.best_val_acc = 0.
         
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs={}, verbose=True):
         if self.best_val_acc < logs.get('val_acc'):
-            print "On epoch %d: validation loss improved from %0.5f to %0.5f, saving model to %s"%(self.best_val_acc, logs.get('val_acc'), self.fname)
-            self.best_val_acc = logs.get('val_acc')
-            self.model.save_weights(self.fname, overwrite=True)
+            if verbose:
+                print "On epoch %d: validation loss improved from %0.5f to %0.5f, saving model to %s"%(epoch, self.best_val_acc, logs.get('val_acc')*1., self.fname)
+            self.best_val_acc = logs.get('val_acc')*1.
+            self.model.save_model(self.fname, overwrite=True)
 
