@@ -42,7 +42,7 @@ class NN(containers.Sequential):
 
     def compile(self, optimizer, loss, reg_type='L2', learning_rate = 0.01,
             class_mode="categorical",momentum=None,lr_decay=None,
-            nesterov=False):
+            nesterov=False,rho=0.01):
         """
         Build and compile theano graph functions
         Inputs:
@@ -52,9 +52,12 @@ class NN(containers.Sequential):
         self.learning_rate = learning_rate
         self.optimizer = optimizers.get(optimizer)
         self.optimizer.set_lr(learning_rate)
-        self.optimizer.set_momentum(momentum)
-        self.optimizer.set_lr_decay(lr_decay)
-        #self.optimizer.set_nesterov(nesterov, momentum)
+        if optimizer == 'SGD':
+            self.optimizer.set_momentum(momentum)
+            self.optimizer.set_lr_decay(lr_decay)
+            self.optimizer.set_nesterov(nesterov, momentum)
+        elif optimizer == 'RMSprop' or optimizer == 'Adadelta':
+            self.optimizer.set_rho(rho)
 
         self.data_loss = losses.get(loss)
         self.reg_loss = losses.get(reg_type)

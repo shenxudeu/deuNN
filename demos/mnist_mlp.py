@@ -22,7 +22,8 @@ nb_epoch = 10
 learning_rate = 0.05
 momentum = 0.9
 lr_decay = 0.01
-nesterov = False
+nesterov = True
+rho = 0.9
 reg_W = 0.001
 nb_hidden1 = 500
 nb_hidden2 = 500
@@ -53,9 +54,9 @@ model.add(AffineLayer(nb_hidden2, nb_classes, activation='softmax',reg_W=reg_W))
 
 # Compile NN
 print 'Compile NN ...'
-model.compile(optimizer='SGD', loss='categorical_crossentropy',
+model.compile(optimizer='RMSprop', loss='categorical_crossentropy',
         reg_type='L2', learning_rate=learning_rate,momentum=momentum,
-        lr_decay=lr_decay,nesterov=nesterov)
+        lr_decay=lr_decay,nesterov=nesterov, rho = rho)
 
 # Train NN
 model.fit(train_X, train_y, valid_X, valid_y,
