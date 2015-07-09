@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 import time
 
-sys.path.append('/home/xu/deuNN/')
+sys.path.append('../../../deuNN/')
 
 from deuNN import optimizers
 from deuNN import losses
