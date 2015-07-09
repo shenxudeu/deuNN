@@ -144,7 +144,7 @@ class ModelCheckPoint(CallBack):
         self.best_val_acc = 0.
         
     def on_epoch_end(self, epoch, logs={}, verbose=True):
-        if self.best_val_acc < logs.get('val_acc'):
+        if self.best_val_acc < logs.get('val_acc') and epoch > 5:
             if verbose:
                 print "On epoch %d: validation loss improved from %0.5f to %0.5f, saving model to %s"%(epoch, self.best_val_acc, logs.get('val_acc')*1., self.fname)
             self.best_val_acc = logs.get('val_acc')*1.
