@@ -22,7 +22,7 @@ class SharpeNet(NN):
     def loss(self, z, y):
         y1 = T.max(z,axis=1)*y
         return -(T.mean(y1) / T.std(y1)) 
-        #return -(T.mean(y1) / (T.std(y1)+T.std(T.max(z,axis=1)))) 
+        #return -(T.mean(y1) / (T.std(y1)+1e-1*T.std(y)*T.std(T.max(z,axis=1)))) 
 
     def ir(self, z, y):
         y1 = T.max(z,axis=1)*y
