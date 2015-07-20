@@ -58,7 +58,7 @@ def model(X, w, w2, w4, w_o, p_drop_conv, p_drop_hidden):
     l1  = dropout(l1, p_drop_conv)
 
     l2a = rectify(conv2d(l1, w2))
-    l2b  = max_pool_2d(l2a, (4,4))
+    l2b  = max_pool_2d(l2a, (2,2))
     l2  = T.flatten(l2b, outdim=2)
     l2  = dropout(l2, p_drop_conv)
 
@@ -127,17 +127,16 @@ datasets = load_mnist('mnist.pkl.gz')
 (train_X, train_y) = datasets[0]
 (valid_X, valid_y) = datasets[1]
 (test_X, test_y) = datasets[2]
-
 train_X = train_X.reshape((-1,1,28,28))
 valid_X = valid_X.reshape((-1,1,28,28))
 test_X  = test_X.reshape((-1,1,28,28))
 X = T.ftensor4()
 y = T.fmatrix()
 
-w = init_weights((32,1,3,3))
-w2 = init_weights((64,32,3,3))
+w = init_weights((8,1,3,3))
+w2 = init_weights((16,8,3,3))
 #w3 = init_weights((128,64,3,3))
-w4 = init_weights((128*3*3,625))
+w4 = init_weights((16*7*7,625))
 w_o = init_weights((625,10))
 
 noise_l1, noise_l2, noise_l4, noise_py_x = model(X,w,w2,w4,w_o,0.2,0.5)
