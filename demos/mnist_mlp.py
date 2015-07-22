@@ -18,7 +18,7 @@ import pdb
 
 batch_size = 50
 nb_classes = 10
-nb_epoch = 10
+nb_epoch = 100
 learning_rate = 0.05
 momentum = 0.9
 lr_decay = 0.01
