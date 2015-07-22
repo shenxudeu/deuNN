@@ -23,7 +23,7 @@ def uniform(shape, scale=1e-5):
 def normal(shape, scale=1e-5):
     return sharedX(np.random.randn(*shape) * scale)
 
-def lecun_uniform(shape):
+def lecun_uniform(shape, scale=None):
     """
     LeCun introduced this on 1998, Efficient Backprop
     http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf
@@ -32,7 +32,7 @@ def lecun_uniform(shape):
     scale = np.sqrt(3./fan_in)
     return uniform(shape, scale)
 
-def glorot_normal(shape):
+def glorot_normal(shape, scale=None):
     """
     Introduced by Glorot and Bengio at 2010.
     Reference: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
@@ -41,12 +41,12 @@ def glorot_normal(shape):
     s = np.sqrt(2./(fan_in+fan_out))
     return normal(shape, s)
 
-def glorot_uniform(shape):
+def glorot_uniform(shape, scale=None):
     fan_in, fan_out = get_fans(shape)
     s = np.sqrt(6./(fan_in+fan_out))
     return uniform(shape, s)
 
-def he_normal(shape):
+def he_normal(shape, scale=None):
     """
     Introduced by Kaiming He and etc on 2015. 
     Reference: http://arxiv.org/abs/1502.01852
@@ -55,7 +55,7 @@ def he_normal(shape):
     s = np.sqrt(2./fan_in)
     return normal(shape, s)
 
-def he_uniform(shape):
+def he_uniform(shape, scale=None):
     fan_in, fan_out = get_fans(shape)
     s = np.sqrt(6./fan_in)
     return uniform(shape, s)
