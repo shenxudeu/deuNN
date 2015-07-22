@@ -162,7 +162,7 @@ print "Start Training"
 num_iter = 0
 show_frequency = len(train_X)/128 / 5
 for i in xrange(100):
-    for start, end in zip(range(0,len(train_X),128),range(128,len(train_X),128)):
+    for start, end in zip(range(0,len(train_X),64),range(128,len(train_X),64)):
         cost = train(train_X[start:end], train_y[start:end])
         num_iter += 1
         if num_iter % show_frequency == 0:
