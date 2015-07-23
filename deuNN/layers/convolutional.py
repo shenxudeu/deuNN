@@ -6,6 +6,17 @@ from .. import activations, initializations
 from .. utils.theano_utils import shared_zeros, shared_scalar
 from .. layers.core import Layer
 
+class Flatten(Layer):
+    """
+    Flatten a multi-dim volumn to 2D
+    Assume the first dim to be nb_samples.
+    """
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def get_output(self, train=False):
+        X = self.get_input(train)
+        return T.flatten(X, outdim=2)
 
 class Convolution2D(Layer):
     """
@@ -42,7 +53,7 @@ class Convolution2D(Layer):
         if border_mode not in {'valid', 'full'}:
             raise Exception("Invalid boder mode for ConvNet 2D")
 
-        super(Convolution2D.self).__init__()
+        super(Convolution2D,self).__init__()
         self.init = initializations.get(init)
         self.activation = activations.get(activation)
         

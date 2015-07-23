@@ -185,9 +185,10 @@ class NN(containers.Sequential):
             - verbose: bool
         """
         self.verbose=verbose
-        (N, D) = train_X.shape
-        print 'Training Data: %d x %d'%(N, D)
-        print 'Validation Data: %d x %d'%(valid_X.shape[0], valid_X.shape[1])
+        
+        N = train_X.shape[0]
+        print 'Training Data: ', train_X.shape
+        print 'Validation Data: ', valid_X.shape
         
         # mini-batch training
         print 'Start Training'
