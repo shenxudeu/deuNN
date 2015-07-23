@@ -117,7 +117,7 @@ class Dropout(Layer):
     Dropout Layer
     Reference: http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf
     """
-    def __init__(self, p, nb_input, uncertainty = False):
+    def __init__(self, p, nb_input=None, uncertainty = False):
         """
         p: floatX, percentage of neurons want to drop, higher this value, more to drop
         uncertainty: Yarin Gal's Gaussian process uncertainty estimation
@@ -135,9 +135,9 @@ class Dropout(Layer):
         assert self.p >= 0
         retain_prob = 1. - self.p
         if train:
-            X *= srng.binomial((self.nb_input,), p=retain_prob, dtype=theano.config.floatX) / retain_prob
+            X *= srng.binomial(X.shape, p=retain_prob, dtype=theano.config.floatX) / retain_prob
         elif not train and self.uncertainty:
-            X *= srng.binomial((self.nb_input,), p=retain_prob, dtype=theano.config.floatX) / retain_prob
+            X *= srng.binomial(X.shape, p=retain_prob, dtype=theano.config.floatX) / retain_prob
         
         return X
 

@@ -11,13 +11,13 @@ from deuNN.utils import np_utils
 from deuNN.datasets import mnist
 from deuNN.models import NN
 from deuNN.layers.core import AffineLayer, Dropout
-from deuNN.layers.convolutional import Convolution2D,Flatten
+from deuNN.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 
 import pdb
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 100
+nb_epoch = 50
 learning_rate = 0.001
 momentum = 0.9
 lr_decay = 0.9
@@ -36,7 +36,6 @@ checkpoint_fn = '.trained_convnet.h5'
 train_X = train_X.astype('float32')
 valid_X = valid_X.astype('float32')
 test_X = test_X.astype('float32')
-#D = train_X.shape[1]
 
 # Reshape input to 4D volume
 train_X = train_X.reshape((-1,1,28,28))
@@ -50,10 +49,17 @@ test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
 model = NN(checkpoint_fn)
-model.add(Convolution2D(16,1,3,3,
+model.add(Convolution2D(8,1,3,3, border_mode='full',
                         init='normal',activation='relu', reg_W=0, w_scale=0.01))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Dropout(0.2, uncertainty=False))
+model.add(Convolution2D(16,8,3,3, border_mode='valid',
+                        init='normal',activation='relu', reg_W=0, w_scale=0.01))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Dropout(0.5, uncertainty=False))
 model.add(Flatten())
-model.add(AffineLayer(16*28*28,625,activation='relu',reg_W=0))
+model.add(AffineLayer(16*6*6,625,activation='relu',reg_W=0))
+model.add(AffineLayer(625,10,activation='softmax',reg_W=0))
 
 # Compile NN
 print 'Compile ConvNet ...'
