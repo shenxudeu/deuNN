@@ -34,6 +34,9 @@ class SGD(object):
         self.decay = decay
 
     def set_nesterov(self, nesterov=True,momentum=0.9):
+        """
+        Reference: http://www.magicbroom.info/Papers/DuchiHaSi10.pdf
+        """
         self.momentum = momentum
         self.nesterov = nesterov
         if nesterov and momentum is None:
