@@ -9,6 +9,8 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from theano.tensor.nnet.conv import conv2d
 from theano.tensor.signal.downsample import max_pool_2d
 
+np.random.seed(1984)
+
 srng = RandomStreams()
 
 import pdb
@@ -57,7 +59,7 @@ def model(X, w, w2, w4, w_o, p_drop_conv, p_drop_hidden):
     l1  = max_pool_2d(l1a, (2,2))
     l1  = dropout(l1, p_drop_conv)
 
-    l2a = rectify(conv2d(l1, w2))
+    l2a = rectify(conv2d(l1, w2, border_mode='valid'))
     l2b  = max_pool_2d(l2a, (2,2))
     l2  = T.flatten(l2b, outdim=2)
     l2  = dropout(l2, p_drop_conv)
@@ -161,7 +163,9 @@ predict = theano.function(
 print "Start Training"
 num_iter = 0
 show_frequency = len(train_X)/128 / 5
-for i in xrange(100):
+start_time = time.clock()
+nb_epoch = 50
+for i in xrange(nb_epoch):
     for start, end in zip(range(0,len(train_X),128),range(128,len(train_X),128)):
         cost = train(train_X[start:end], train_y[start:end])
         num_iter += 1
@@ -170,6 +174,10 @@ for i in xrange(100):
     train_acc = np.mean(np.argmax(train_y,axis=1) == predict(train_X))
     valid_acc = np.mean(np.argmax(valid_y,axis=1) == predict(valid_X))
     print 'Training Acc. %f, Validation Acc. %f'%(train_acc, valid_acc)
+
+end_time = time.clock()
+print "The training run for %d epochs, with %f epochs/sec"%(nb_epoch,
+                            1.*nb_epoch / (end_time - start_time))
 
 test_acc = np.mean(np.argmax(test_y,axis=1) == predict(test_X))
 print '*** Test Acc .%f'%test_acc

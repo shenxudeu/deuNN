@@ -14,6 +14,7 @@ from deuNN.layers.core import AffineLayer, Dropout
 from deuNN.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 
 import pdb
+np.random.seed(1984)
 
 batch_size = 128
 nb_classes = 10
@@ -58,7 +59,7 @@ model.add(Convolution2D(16,8,3,3, border_mode='valid',
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Dropout(0.5, uncertainty=False))
 model.add(Flatten())
-model.add(AffineLayer(16*6*6,625,activation='relu',reg_W=0))
+model.add(AffineLayer(16*7*7,625,activation='relu',reg_W=0))
 model.add(AffineLayer(625,10,activation='softmax',reg_W=0))
 
 # Compile NN
@@ -73,9 +74,5 @@ model.fit(train_X, train_y, valid_X, valid_y,
 
 # Test NN
 model.get_test_accuracy(test_X, test_y)
-#
-
-
-
 
 

@@ -6,7 +6,8 @@ from ..utils.theano_utils import shared_zeros, floatX, shared_scalar
 from .. import activations, initializations
 
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-srng = RandomStreams(seed=np.random.randint(10e6))
+#srng = RandomStreams(seed=np.random.randint(10e6))
+srng = RandomStreams()
 import pdb
 
 """

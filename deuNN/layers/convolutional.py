@@ -99,7 +99,7 @@ class Convolution2D(Layer):
 
 
 class MaxPooling2D(Layer):
-    def __init__(self, pool_size=(2,2), stride=None, ignore_border=True):
+    def __init__(self, pool_size=(2,2), stride=None, ignore_border=False):
         super(MaxPooling2D,self).__init__()
         self.input = T.tensor4()
         self.poolsize = pool_size
