@@ -50,11 +50,11 @@ test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
 model = NN(checkpoint_fn)
-model.add(Convolution2D(16,1,3,3, border_mode='full',
+model.add(Convolution2D(8,1,3,3, border_mode='full',
                         init='normal',activation='relu', reg_W=0, w_scale=0.01))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Dropout(0.2, uncertainty=False))
-model.add(Convolution2D(16,16,3,3, border_mode='valid',
+model.add(Convolution2D(16,8,3,3, border_mode='valid',
                         init='normal',activation='relu', reg_W=0, w_scale=0.01))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Dropout(0.5, uncertainty=False))
