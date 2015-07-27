@@ -14,7 +14,7 @@ from deuNN.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 
 import pdb
 
-batch_size = 25
+batch_size = 10
 nb_classes = 10
 nb_epoch = 100
 learning_rate = 0.001
@@ -23,7 +23,7 @@ momentum = 0.9
 lr_decay = 0.0001
 nesterov = False
 rho = 0.9
-reg_W = 1e-4
+reg_W = 0.
 
 checkpoint_fn = '.trained_cifar10_convnet.h5'
 
@@ -37,25 +37,24 @@ test_y = np_utils.one_hot(test_y, nb_classes)
 
 # NN architecture
 model = NN(checkpoint_fn)
-model.add(Convolution2D(32,3,5,5, border_mode='full',
-    init='normal',activation='relu', reg_W=reg_W, w_scale=0.001))
+model.add(Convolution2D(32,3,3,3, border_mode='full',
+    init='glorot_uniform',activation='relu', reg_W=reg_W))
+model.add(Convolution2D(32,32,3,3, border_mode='valid',
+    init='glorot_uniform',activation='relu', reg_W=reg_W))
 model.add(MaxPooling2D(pool_size=(2,2)))
-#model.add(Dropout(0.2, uncertainty=False))
+model.add(Dropout(0.25, uncertainty=False))
 
-model.add(Convolution2D(32,32,5,5, border_mode='full',
-    init='normal',activation='relu', reg_W=reg_W, w_scale=0.01))
-model.add(MaxPooling2D(pool_size=(2,2)))
-#model.add(Dropout(0.5, uncertainty=False))
+model.add(Convolution2D(64,32,3,3, border_mode='full',
+    init='glorot_uniform',activation='relu', reg_W=reg_W))
+model.add(Convolution2D(64,64,3,3, border_mode='valid',
+    init='glorot_uniform',activation='relu', reg_W=reg_W))
+model.add(Dropout(0.25,uncertainty=False))
 
-model.add(Convolution2D(64,32,5,5, border_mode='full',
-    init='normal',activation='relu', reg_W=reg_W, w_scale=0.01))
-model.add(MaxPooling2D(pool_size=(2,2)))
-#model.add(Dropout(0.5, uncertainty=False))
 
 model.add(Flatten())
-model.add(AffineLayer(8*8*64, 64,activation='relu',reg_W=0.1))
+model.add(AffineLayer(8*8*64, 512,activation='relu',reg_W=0.1))
 model.add(Dropout(0.5, uncertainty=False))
-model.add(AffineLayer(64, nb_classes,activation='softmax',reg_W=0.1))
+model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=0.1))
 
 
 # Compile NN
