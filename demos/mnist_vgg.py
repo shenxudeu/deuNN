@@ -18,7 +18,7 @@ np.random.seed(1984)
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 50
+nb_epoch = 100
 learning_rate = 0.001
 momentum = 0.9
 lr_decay = 0.9
@@ -72,22 +72,16 @@ model.add(Convolution2D(512,512,3,3, border_mode='full', init='normal',activatio
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Dropout(0.5, uncertainty=False))
 
-model.add(Convolution2D(512,256,3,3, border_mode='full', init='normal',activation='relu', reg_W=0, w_scale=0.01))
+model.add(Convolution2D(512,512,3,3, border_mode='full', init='normal',activation='relu', reg_W=0, w_scale=0.01))
 model.add(Convolution2D(512,512,3,3, border_mode='full', init='normal',activation='relu', reg_W=0, w_scale=0.01))
 model.add(Convolution2D(512,512,3,3, border_mode='full', init='normal',activation='relu', reg_W=0, w_scale=0.01))
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Dropout(0.5, uncertainty=False))
 
 model.add(Flatten())
-model.add(AffineLayer(512*7*7,1024,activation='relu',reg_W=0))
-model.add(AffineLayer(1024,516,activation='relu',reg_W=0))
-model.add(AffineLayer(516,10,activation='softmax',reg_W=0))
+model.add(AffineLayer(512*7*7,256,activation='relu',reg_W=0))
+model.add(AffineLayer(256,10,activation='softmax',reg_W=0))
 
-
-model.add(Dropout(0.5, uncertainty=False))
-model.add(Flatten())
-model.add(AffineLayer(16*3*3,625,activation='relu',reg_W=0))
-model.add(AffineLayer(625,10,activation='softmax',reg_W=0))
 
 # Compile NN
 print 'Compile ConvNet ...'
