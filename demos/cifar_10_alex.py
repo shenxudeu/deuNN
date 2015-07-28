@@ -13,6 +13,7 @@ from deuNN.layers.core import AffineLayer, Dropout
 from deuNN.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 
 import pdb
+np.random.seed(1984)
 
 batch_size = 10
 nb_classes = 10
