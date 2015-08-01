@@ -18,12 +18,12 @@ np.random.seed(1337)
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 100
-learning_rate = 0.001
-momentum = 0.9
-lr_decay = 0.9
+nb_epoch = 50
+learning_rate = 0.01
+momentum = 0.
+lr_decay = 0.
 nesterov = False
-rho = 0.9
+rho = 0.
 reg_W = 0.
 
 checkpoint_fn = '.trained_convnet.h5'
@@ -52,21 +52,20 @@ test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
 model = NN(checkpoint_fn)
-model.add(Convolution2D(8,1,3,3, border_mode='full',
-                        init='normal',activation='relu', reg_W=0, w_scale=0.01))
+model.add(Convolution2D(32,1,3,3, border_mode='full',
+                        init='glorot_uniform',activation='relu', reg_W=0))
+model.add(Convolution2D(32,32,3,3, border_mode='valid',
+                        init='glorot_uniform',activation='relu', reg_W=0))
 model.add(MaxPooling2D(pool_size=(2,2)))
-model.add(Dropout(0.2, uncertainty=False))
-model.add(Convolution2D(16,8,3,3, border_mode='valid',
-                        init='normal',activation='relu', reg_W=0, w_scale=0.01))
-model.add(MaxPooling2D(pool_size=(2,2)))
-model.add(Dropout(0.5, uncertainty=False))
+#model.add(Dropout(0.2, uncertainty=False))
+
 model.add(Flatten())
-model.add(AffineLayer(16*7*7,625,activation='relu',reg_W=0))
-model.add(AffineLayer(625,10,activation='softmax',reg_W=0))
+model.add(AffineLayer(32*196,128,init='glorot_uniform',activation='relu',reg_W=0))
+model.add(AffineLayer(128,10,init='glorot_uniform',activation='softmax',reg_W=0))
 
 # Compile NN
 print 'Compile ConvNet ...'
-model.compile(optimizer='RMSprop', loss='categorical_crossentropy',
+model.compile(optimizer='SGD', loss='categorical_crossentropy',
         reg_type='L2', learning_rate=learning_rate, momentum=momentum,
         lr_decay=lr_decay, nesterov=nesterov, rho=rho)
 

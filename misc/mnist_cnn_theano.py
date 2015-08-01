@@ -161,6 +161,7 @@ for i in xrange(100):
     for start, end in zip(range(0,len(train_X),128),range(128,len(train_X),128)):
         #cost = train(train_X[start:end], train_y[start:end])
         [cost,tr_acc] = train_acc(train_X[start:end], train_y[start:end])
+	pdb.set_trace()
         num_iter += 1
         if num_iter % show_frequency == 0:
             print 'Iteration %d, epoch %d: cost = %f'%(num_iter,i,cost)
