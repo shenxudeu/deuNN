@@ -7,7 +7,7 @@ import sys
 sys.path.append("../../deuNN/")
 
 from deuNN.utils import np_utils
-from deuNN.datasets import cifar_10
+from deuNN.datasets import cifar10
 from deuNN.models import NN
 from deuNN.layers.core import AffineLayer, Dropout
 from deuNN.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
@@ -28,17 +28,22 @@ reg_W = 0.
 
 checkpoint_fn = '.trained_cifar10_convnet.h5'
 
-[train_X, train_y,valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
-
+#[train_X, train_y,valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
+(train_X, train_y), (test_X, test_y) = cifar10.load_data()
+valid_X,valid_y = test_X, test_y
 
 # convert data_y to one-hot
 train_y = np_utils.one_hot(train_y, nb_classes)
 valid_y = np_utils.one_hot(valid_y, nb_classes)
 test_y = np_utils.one_hot(test_y, nb_classes)
+
+train_X = train_X.astype("float32")
+valid_X = valid_X.astype("float32")
+test_X = test_X.astype("float32")
 train_X /= 255
 valid_X /= 255
 test_X  /= 255
-
+pdb.set_trace()
 
 # NN architecture
 model = NN(checkpoint_fn)

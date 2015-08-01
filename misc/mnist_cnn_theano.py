@@ -6,20 +6,17 @@ from theano.tensor.nnet.conv import conv2d
 from theano.tensor.signal.downsample import max_pool_2d
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 import time
+import pdb
+np.random.seed(1337)
+
 
 sys.path.append('../../deuNN/')
-
-from deuNN.datasets import cifar_10
+from deuNN.datasets import mnist
 from deuNN.utils import np_utils
 from deuNN.utils.theano_utils import sharedX, shared_zeros
 from deuNN.optimizers import SGD
 
-import pdb
-np.random.seed(1984)
-
-srng = RandomStreams()
-
-import pdb
+srng = RandomStreams(seed=np.random.randint(10e6))
 
 def shared_data(np_data, borrow=True):
     return theano.shared(np.asarray(np_data, dtype=theano.config.floatX), borrow=borrow)
@@ -35,6 +32,7 @@ def get_fans(shape):
     return fan_in, fan_out
 
 def uniform(shape, scale=1e-5):
+    np.random.seed(1337)
     return sharedX(np.random.uniform(low=-scale,high=scale,size=shape))
 
 def glorot_uniform(shape, scale=None):
@@ -73,66 +71,83 @@ def RMSprop(cost, params, lr=0.001, rho=0.9, epsilon=1e-6):
     return updates
 
 
-def model(X, w, w1, w2, w3, w4,b4, w_o, b_o, p_drop_conv, p_drop_hidden):
+def model(X, w, w1, w2, b2, w_o, b_o, p_drop_conv, p_drop_hidden):
     l1 = rectify(conv2d(X, w, border_mode = 'full'))
-    
     l2a = rectify(conv2d(l1, w1, border_mode = 'valid'))
     l2  = max_pool_2d(l2a,(2,2))
-    l2  = dropout(l2, p_drop_conv)
+    #l2  = dropout(l2, p_drop_conv)
 
-    l3 = rectify(conv2d(l2, w2, border_mode = 'full'))
+    l3  = T.flatten(l2, outdim = 2)
+    l3  = rectify(T.dot(l3,w2)+b2)
+    #l3  = dropout(l3, p_drop_hidden)
     
-    l4a = rectify(conv2d(l3, w3, border_mode = 'valid'))
-    l4  = max_pool_2d(l4a,(2,2))
-    l4  = dropout(l4, p_drop_conv)
+    pyx  = softmax(T.dot(l3,w_o)+b_o)
 
-    l5  = T.flatten(l4, outdim = 2)
-    l5  = rectify(T.dot(l5,w4)+b4)
-    l5  = dropout(l5, p_drop_hidden)
-    
-    pyx  = softmax(T.dot(l5,w_o)+b_o)
-
-    return l1, l2, l3, l4, l5, pyx
+    return l1, l2, l3, pyx
 
 
-[train_X, train_y, valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
+#[train_X, train_y, valid_X, valid_y, test_X, test_y] = mnist.load_data()
+#[train_set, valid_set, test_set] = mnist.load_data()
+#(train_X, train_y) = train_set
+#(valid_X, valid_y) = valid_set
+#(test_X, test_y) = test_set
+#train_X = np.vstack((train_X,valid_X))
+#train_y = np.hstack((train_y,valid_y))
+#valid_X, valid_y = test_X, test_y
+
+(train_X, train_y),(test_X, test_y) = mnist.load_data()
+(train_X,train_y), (test_X,test_y) = mnist.load_data()
+valid_X,valid_y = test_X, test_y
 nb_classes = 10
-    
+
+train_X = train_X.reshape(train_X.shape[0], 1, 28, 28)
+valid_X = valid_X.reshape(valid_X.shape[0], 1, 28, 28)
+test_X = test_X.reshape(test_X.shape[0], 1, 28, 28)
+
 train_y = np_utils.one_hot(train_y, nb_classes)
 valid_y = np_utils.one_hot(valid_y, nb_classes)
 test_y = np_utils.one_hot(test_y, nb_classes)
+
+train_X = train_X.astype("float32")
+valid_X = valid_X.astype("float32")
+test_X = test_X.astype("float32")
 train_X /= 255
 valid_X /= 255
 test_X /= 255
 
 X = T.ftensor4()
 y = T.fmatrix()
-w = glorot_uniform((32,3,3,3))
+w = glorot_uniform((32,1,3,3))
 w1 = glorot_uniform((32,32,3,3))
-w2 = glorot_uniform((64,32,3,3))
-w3 = glorot_uniform((64,64,3,3))
-w4 = glorot_uniform((64*8*8, 512))
-w_o = glorot_uniform((512,10))
-b4 = shared_zeros(512)
+w2 = glorot_uniform((32*196,128))
+w_o = glorot_uniform((128,10))
+b2 = shared_zeros(128)
 b_o = shared_zeros(10)
 
-noise_l1, noise_l2, noise_l3, noise_l4, noise_l5, noise_py_x = model(X, w, w1, w2, w3, w4,b4,
-        w_o, b_o, 0.25, 0.5)
+noise_l1, noise_l2, noise_l3, noise_py_x = model(X, w, w1, w2,b2, w_o, b_o, 0.25, 0.5)
 
-l1, l2, l3, l4, l5, py_x = model(X, w, w1, w2, w3, w4,b4, w_o, b_o, 0.25, 0.5)
+l1, l2, l3, py_x = model(X, w, w1, w2, b2, w_o, b_o, 0.25, 0.5)
 y_x = T.argmax(py_x, axis=1)
 
 cost = T.mean(T.nnet.categorical_crossentropy(noise_py_x, y))
-params = [w, w1, w2, w3, w4, b4, w_o, b_o]
-optimizer = SGD(lr = 0.01, momentum = 0.9, decay = 1e-6, nesterov=True)
+params = [w, w1, w2, b2,w_o, b_o]
+optimizer = SGD(lr = 0.01, momentum = 0., decay = 0, nesterov=False)
 updates = optimizer.get_updates(cost, params)
 #updates = RMSprop(cost, params, lr = 0.01)
+
+train_accuracy = T.mean(T.eq(T.argmax(y, axis=-1), T.argmax(py_x, axis=-1)))
 
 print "Compile Network"
 train = theano.function(
         inputs = [X, y],
         outputs = cost,
         updates = updates, allow_input_downcast = True)
+
+train_acc = theano.function(
+        inputs = [X, y],
+        outputs = [cost, train_accuracy],
+        updates = updates, allow_input_downcast = True)
+
 
 predict = theano.function(
         inputs = [X],
@@ -143,8 +158,9 @@ print "Start Training"
 num_iter = 0
 show_frequency = 100
 for i in xrange(100):
-    for start, end in zip(range(0,len(train_X),10),range(10,len(train_X),10)):
-        cost = train(train_X[start:end], train_y[start:end])
+    for start, end in zip(range(0,len(train_X),128),range(128,len(train_X),128)):
+        #cost = train(train_X[start:end], train_y[start:end])
+        [cost,tr_acc] = train_acc(train_X[start:end], train_y[start:end])
         num_iter += 1
         if num_iter % show_frequency == 0:
             print 'Iteration %d, epoch %d: cost = %f'%(num_iter,i,cost)

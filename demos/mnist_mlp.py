@@ -30,16 +30,21 @@ nb_hidden2 = 500
 
 checkpoint_fn = '.trained_net.h5'
 
-[train_set, valid_set, test_set] = mnist.load_data()
-[train_X, train_y] = train_set
-[valid_X, valid_y] = valid_set
-[test_X, test_y] = test_set
+(train_X, train_y), (test_X, test_y) = mnist.load_data()
+valid_X, valid_y = test_X, test_y
+
+train_X = train_X.reshape((train_X.shape[0],-1))
+valid_X = valid_X.reshape((valid_X.shape[0],-1))
+test_X = test_X.reshape((test_X.shape[0],-1))
 
 # make sure all data_X are in float32 for GPU use
 train_X = train_X.astype('float32')
 valid_X = valid_X.astype('float32')
 test_X = test_X.astype('float32')
 D = train_X.shape[1]
+train_X /= 255
+valid_X /= 255
+test_X /= 255
 
 # convert data_y to one-hot
 train_y = np_utils.one_hot(train_y,nb_classes)

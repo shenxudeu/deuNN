@@ -7,15 +7,11 @@ from theano.tensor.signal.downsample import max_pool_2d
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 import time
 
-sys.path.append('/home/xu/Work/deuNN/')
-from deuNN.datasets import cifar_10
+sys.path.append('../../deuNN/')
+from deuNN.datasets import cifar10
 from deuNN.utils import np_utils
 from deuNN.utils.theano_utils import sharedX, shared_zeros
 from deuNN.optimizers import SGD
-
-sys.path.append('../../keras/')
-from keras.datasets import cifar10
-#from keras.optimizers import SGD
 
 import pdb
 np.random.seed(1984)
@@ -38,6 +34,7 @@ def get_fans(shape):
     return fan_in, fan_out
 
 def uniform(shape, scale=1e-5):
+    np.random.seed(1337)
     return sharedX(np.random.uniform(low=-scale,high=scale,size=shape))
 
 def glorot_uniform(shape, scale=None):
@@ -106,11 +103,11 @@ nb_classes = 10
 train_y = np_utils.one_hot(train_y, nb_classes)
 valid_y = np_utils.one_hot(valid_y, nb_classes)
 test_y = np_utils.one_hot(test_y, nb_classes)
-train_X /= 255
-valid_X /= 255
 train_X = train_X.astype("float32")
 valid_X = valid_X.astype("float32")
-#test_X /= 255
+train_X /= 255
+valid_X /= 255
+test_X /= 255
 
 X = T.ftensor4()
 y = T.fmatrix()

@@ -28,15 +28,17 @@ reg_W = 0.
 
 checkpoint_fn = '.trained_convnet.h5'
 
-[train_set, valid_set, test_set] = mnist.load_data()
-[train_X, train_y] = train_set
-[valid_X, valid_y] = valid_set
-[test_X, test_y] = test_set
+#[train_set, valid_set, test_set] = mnist.load_data()
+(train_X, train_y), (test_X, test_y) = mnist.load_data()
+valid_X, valid_y = test_X, test_y
 
 # make sure all data_X are in float32 for GPU use
 train_X = train_X.astype('float32')
 valid_X = valid_X.astype('float32')
 test_X = test_X.astype('float32')
+train_X /= 255
+valid_X /= 255
+test_X /= 255
 
 # Reshape input to 4D volume
 train_X = train_X.reshape((-1,1,28,28))

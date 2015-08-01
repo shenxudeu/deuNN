@@ -7,7 +7,7 @@ import sys
 sys.path.append("../../deuNN/")
 
 from deuNN.utils import np_utils
-from deuNN.datasets import cifar_10
+from deuNN.datasets import cifar10
 from deuNN.models import NN
 from deuNN.layers.core import AffineLayer, Dropout
 
@@ -16,23 +16,28 @@ import pdb
 batch_size = 100
 nb_classes = 10
 nb_epoch = 20
-learning_rate = 3e-5
+learning_rate = 1e-2
 momentum = 0.9
 lr_decay = 0.01
-nesterov = False
+nesterov = True
 rho = 0.9
 reg_W = 0.1
 nb_hidden1 = 32*32
 
 checkpoint_fn = '.trained_cifar10_mlp.h5'
 
-[train_X, train_y,valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
+#[train_X, train_y,valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
+(train_X, train_y), (test_X, test_y) = cifar10.load_data()
+valid_X,valid_y = test_X, test_y
 
 nb_channels, nb_w, nb_h = train_X.shape[1], train_X.shape[2], train_X.shape[3]
 train_X = train_X.reshape(-1,nb_channels*nb_w*nb_h).astype('float32')
 valid_X = valid_X.reshape(-1,nb_channels*nb_w*nb_h).astype('float32')
 test_X = test_X.reshape(-1,nb_channels*nb_w*nb_h).astype('float32')
 D = train_X.shape[1]
+train_X /= 255
+valid_X /= 255
+test_X  /= 255
 
 # convert data_y to one-hot
 train_y = np_utils.one_hot(train_y, nb_classes)
