@@ -212,6 +212,7 @@ class NN(containers.Sequential):
                 logger.on_batch_begin(iter_num)
                 train_ins = [train_X[start:end], train_y[start:end]]
                 [train_loss, train_acc] = self._train_acc(*train_ins)
+		pdb.set_trace()
                 batch_logs = {'loss':train_loss, 'size':batch_size}
                 batch_logs['accuracy'] = train_acc
                 logger.on_batch_end(iter_num, batch_logs)
