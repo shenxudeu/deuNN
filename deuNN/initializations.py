@@ -18,7 +18,7 @@ def get_fans(shape):
     return fan_in, fan_out
 
 def uniform(shape, scale=1e-5):
-    np.random.seed(1337)
+    np.random.seed(1984)
     return sharedX(np.random.uniform(low=-scale,high=scale,size=shape))
 
 def normal(shape, scale=1e-5):

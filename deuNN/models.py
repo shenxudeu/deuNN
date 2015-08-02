@@ -130,6 +130,12 @@ class NN(containers.Sequential):
                 outputs = self.py_x_test,
                 allow_input_downcast=True)
 
+        grads = self.optimizer.get_gradients(total_loss_train, self.params)
+        self._get_grads = theano.function(
+                inputs = ins_train,
+                outputs = grads,
+                allow_input_downcast=True)
+
     def train(self, X, y , accuracy=False):
         ins = [X, y]
         if accuracy:
@@ -212,7 +218,8 @@ class NN(containers.Sequential):
                 logger.on_batch_begin(iter_num)
                 train_ins = [train_X[start:end], train_y[start:end]]
                 [train_loss, train_acc] = self._train_acc(*train_ins)
-		pdb.set_trace()
+                grads = self._get_grads(*train_ins)
+                pdb.set_trace()
                 batch_logs = {'loss':train_loss, 'size':batch_size}
                 batch_logs['accuracy'] = train_acc
                 logger.on_batch_end(iter_num, batch_logs)
