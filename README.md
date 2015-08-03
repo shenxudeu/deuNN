@@ -1,4 +1,4 @@
-# deuNet
+# deuNet Package
 
 This is a Theano based modualized DNN lib written in Python. It contains basic NN modules such as affine layer, conv layer, dropout and etc.
 
