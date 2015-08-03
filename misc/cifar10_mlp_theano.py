@@ -7,11 +7,11 @@ from theano.tensor.signal.downsample import max_pool_2d
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 import time
 
-sys.path.append('../../deuNN/')
-from deuNN.datasets import cifar10
-from deuNN.utils import np_utils
-from deuNN.utils.theano_utils import sharedX, shared_zeros
-from deuNN.optimizers import SGD, RMSprop
+sys.path.append('../../deuNet/')
+from deuNet.datasets import cifar10
+from deuNet.utils import np_utils
+from deuNet.utils.theano_utils import sharedX, shared_zeros
+from deuNet.optimizers import SGD, RMSprop
 
 import pdb
 np.random.seed(1984)

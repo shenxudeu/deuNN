@@ -4,13 +4,13 @@ import theano
 import theano.tensor as T
 import time
 
-sys.path.append('../../../deuNN/')
+sys.path.append('../../../deuNet/')
 
-from deuNN import optimizers
-from deuNN import losses
-from deuNN import callbacks as cbks
-from deuNN.layers import containers
-from deuNN.models import NN
+from deuNet import optimizers
+from deuNet import losses
+from deuNet import callbacks as cbks
+from deuNet.layers import containers
+from deuNet.models import NN
 
 class SharpeNet(NN):
     def __init__(self,checkpoint_fn=None):

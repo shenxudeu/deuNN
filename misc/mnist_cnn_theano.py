@@ -10,11 +10,11 @@ import pdb
 np.random.seed(1337)
 
 
-sys.path.append('../../deuNN/')
-from deuNN.datasets import mnist
-from deuNN.utils import np_utils
-from deuNN.utils.theano_utils import sharedX, shared_zeros
-from deuNN.optimizers import SGD
+sys.path.append('../../deuNet/')
+from deuNet.datasets import mnist
+from deuNet.utils import np_utils
+from deuNet.utils.theano_utils import sharedX, shared_zeros
+from deuNet.optimizers import SGD
 
 srng = RandomStreams(seed=np.random.randint(10e6))
 

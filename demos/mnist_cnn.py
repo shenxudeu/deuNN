@@ -5,13 +5,13 @@ Example of training a ConvNet Classifier on MNIST dataset.
 import numpy as np
 import sys
 
-sys.path.append('../../deuNN/')
+sys.path.append('../../deuNet/')
 
-from deuNN.utils import np_utils
-from deuNN.datasets import mnist
-from deuNN.models import NN
-from deuNN.layers.core import AffineLayer, Dropout
-from deuNN.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
+from deuNet.utils import np_utils
+from deuNet.datasets import mnist
+from deuNet.models import NN
+from deuNet.layers.core import AffineLayer, Dropout
+from deuNet.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 
 import pdb
 np.random.seed(1337)

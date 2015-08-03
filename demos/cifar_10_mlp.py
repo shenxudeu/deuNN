@@ -5,13 +5,13 @@ import numpy as np
 import sys
 
 np.random.seed(1984)
-sys.path.append("../../deuNN/")
+sys.path.append("../../deuNet/")
 
-from deuNN.utils import np_utils
-from deuNN.datasets import cifar10
-from deuNN.models import NN
-from deuNN.layers.core import AffineLayer, Dropout
-from deuNN.layers.convolutional import Flatten
+from deuNet.utils import np_utils
+from deuNet.datasets import cifar10
+from deuNet.models import NN
+from deuNet.layers.core import AffineLayer, Dropout
+from deuNet.layers.convolutional import Flatten
 
 import pdb
 

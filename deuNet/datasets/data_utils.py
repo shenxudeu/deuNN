@@ -8,7 +8,7 @@ from ..utils.generic_utils import Progbar
 
 
 def get_file(fname, origin, untar=False):
-    datadir = os.path.expanduser(os.path.join('~', '.deuNN', 'datasets'))
+    datadir = os.path.expanduser(os.path.join('~', '.deuNet', 'datasets'))
     if not os.path.exists(datadir):
         os.makedirs(datadir)
 
