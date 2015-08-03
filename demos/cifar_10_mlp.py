@@ -17,7 +17,7 @@ import pdb
 
 batch_size = 100
 nb_classes = 10
-nb_epoch = 20
+nb_epoch = 100
 learning_rate = 1e-2
 momentum = None
 lr_decay = None
@@ -47,7 +47,7 @@ test_y = np_utils.one_hot(test_y, nb_classes)
 
 # NN architecture
 model = NN(checkpoint_fn)
-model.add(AffineLayer(D, nb_hidden1, init='glorot_uniform',activation='linear', reg_W = reg_W))
+model.add(AffineLayer(D, nb_hidden1, init='glorot_uniform',activation='relu', reg_W = reg_W))
 model.add(AffineLayer(nb_hidden1, nb_classes, init='glorot_uniform',activation='softmax',reg_W=reg_W))
 # Compile NN
 print 'Compile NN ...'
