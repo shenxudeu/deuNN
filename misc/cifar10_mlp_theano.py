@@ -86,39 +86,47 @@ def model(X, w, b, w_o, b_o):
     #l4  = max_pool_2d(l4a,(2,2))
     #l4  = dropout(l4, p_drop_conv)
 
-    l1  = T.flatten(X, outdim = 2)
-    l2  = rectify(T.dot(l1,w)+b)
+    #l1  = T.flatten(X, outdim = 2)
+    #l2  = rectify(T.dot(X,w)+b)
+    l2  = T.dot(X,w)+b
     #l5  = dropout(l5, p_drop_hidden)
     
     pyx  = softmax(T.dot(l2,w_o)+b_o)
 
-    return l1, l2, pyx
+    return  l2, pyx
 
 
 #[train_X, train_y, valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
 (train_X,train_y), (test_X,test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
 nb_classes = 10
-    
+ 
+nb_channels, nb_w, nb_h = train_X.shape[1], train_X.shape[2], train_X.shape[3]
+train_X = train_X.reshape(-1,nb_channels*nb_w*nb_h).astype('float32')
+valid_X = valid_X.reshape(-1,nb_channels*nb_w*nb_h).astype('float32')
+test_X = test_X.reshape(-1,nb_channels*nb_w*nb_h).astype('float32')
+D = train_X.shape[1]
+
 train_y = np_utils.one_hot(train_y, nb_classes)
 valid_y = np_utils.one_hot(valid_y, nb_classes)
 test_y = np_utils.one_hot(test_y, nb_classes)
-train_X = train_X.astype("float32")
-valid_X = valid_X.astype("float32")
+#train_X = train_X.astype("float32")
+#valid_X = valid_X.astype("float32")
 train_X /= 255
 valid_X /= 255
 test_X /= 255
 
-X = T.ftensor4()
+#X = T.ftensor4()
+X = T.fmatrix()
 y = T.fmatrix()
 w = glorot_uniform((32*32*3,32*32))
 w_o = glorot_uniform((32*32,10))
 b = shared_zeros(32*32)
 b_o = shared_zeros(10)
 
-noise_l1, noise_l2,noise_py_x = model(X, w, b, w_o, b_o)
+noise_l2,noise_py_x = model(X, w, b, w_o, b_o)
 
-l1, l2, py_x = model(X, w, b, w_o, b_o)
+l2, py_x = model(X, w, b, w_o, b_o)
 y_x = T.argmax(py_x, axis=1)
 
 cost = T.mean(T.nnet.categorical_crossentropy(noise_py_x, y))
@@ -145,6 +153,11 @@ get_grads = theano.function(
         outputs = grads,
         allow_input_downcast=True)
 
+get_prob = theano.function(
+        inputs = [X],
+        outputs = noise_py_x,
+        allow_input_downcast=True)
+
 print "Start Training"
 num_iter = 0
 show_frequency = 100
@@ -152,6 +165,7 @@ for i in xrange(100):
     for start, end in zip(range(0,len(train_X),100),range(100,len(train_X),100)):
         cost_val = train(train_X[start:end], train_y[start:end])
         grads_val = get_grads(train_X[start:end], train_y[start:end])
+        prob_val = get_prob(train_X[start:end])
         pdb.set_trace()
         num_iter += 1
         if num_iter % show_frequency == 0:

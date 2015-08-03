@@ -7,8 +7,13 @@ Implmented commonly used activation functions listed on
 http://cs231n.github.io/neural-networks-1/#actfun
 """
 
-def softmax(x):
-    return T.nnet.softmax(x)
+## NOTE: theano version of softmax does NOT handle the large number of X, which cause problems of driving gradients to NaN sometimes.
+#def softmax(x):
+#    return T.nnet.softmax(x)
+
+def softmax(X):
+    e_x = T.exp(X - X.max(axis=1).dimshuffle(0, 'x'))
+    return e_x / e_x.sum(axis=1).dimshuffle(0, 'x')
 
 def relu(x):
     return (x + abs(x)) / 2.

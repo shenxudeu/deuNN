@@ -11,6 +11,7 @@ from deuNN.utils import np_utils
 from deuNN.datasets import cifar10
 from deuNN.models import NN
 from deuNN.layers.core import AffineLayer, Dropout
+from deuNN.layers.convolutional import Flatten
 
 import pdb
 
@@ -46,9 +47,8 @@ test_y = np_utils.one_hot(test_y, nb_classes)
 
 # NN architecture
 model = NN(checkpoint_fn)
-model.add(AffineLayer(D, nb_hidden1, init='glorot_uniform',activation='relu', reg_W = reg_W))
+model.add(AffineLayer(D, nb_hidden1, init='glorot_uniform',activation='linear', reg_W = reg_W))
 model.add(AffineLayer(nb_hidden1, nb_classes, init='glorot_uniform',activation='softmax',reg_W=reg_W))
-
 # Compile NN
 print 'Compile NN ...'
 model.compile(optimizer='RMSprop', loss='categorical_crossentropy',

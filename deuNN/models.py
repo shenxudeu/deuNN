@@ -7,6 +7,7 @@ from . import optimizers
 from . import losses
 from . import callbacks as cbks
 from .layers import containers
+from optimizers import SGD, RMSprop
 
 import pdb
 
@@ -59,6 +60,7 @@ class NN(containers.Sequential):
             self.optimizer.set_nesterov(nesterov, momentum)
         elif optimizer == 'RMSprop' or optimizer == 'Adadelta':
             self.optimizer.set_rho(rho)
+        #self.optimizer = RMSprop(lr=1e-2,rho=0.9)
 
         self.data_loss = losses.get(loss)
         self.reg_loss = losses.get(reg_type)
@@ -78,11 +80,13 @@ class NN(containers.Sequential):
 
         data_loss_train = self.data_loss(self.py_x_train, self.y)
         reg_loss_train = self.reg_loss(self.params, self.regs)
+        #total_loss_train = data_loss_train
         total_loss_train = data_loss_train + reg_loss_train
         
         data_loss_test = self.data_loss(self.py_x_test, self.y)
         reg_loss_test = self.reg_loss(self.params, self.regs)
         total_loss_test = data_loss_test + reg_loss_test
+        #total_loss_test = data_loss_test
 
         if class_mode == 'categorical':
             accuracy_train = T.mean(T.eq(T.argmax(self.y, axis=-1),
@@ -130,11 +134,17 @@ class NN(containers.Sequential):
                 outputs = self.py_x_test,
                 allow_input_downcast=True)
 
-        grads = self.optimizer.get_gradients(total_loss_train, self.params)
-        self._get_grads = theano.function(
-                inputs = ins_train,
-                outputs = grads,
-                allow_input_downcast=True)
+        #grads_data = self.optimizer.get_gradients(total_loss_train, self.params)
+        ##grads_data = self.optimizer.get_gradients(data_loss_train, self.params)
+        #self._get_grads = theano.function(
+        #        inputs = ins_train,
+        #        outputs = grads_data,
+        #        allow_input_downcast=True)
+
+        #self._get_prob = theano.function(
+        #        inputs = [self.X_train],
+        #        outputs = self.py_x_train,
+        #        allow_input_downcast=True)
 
     def train(self, X, y , accuracy=False):
         ins = [X, y]
@@ -218,8 +228,9 @@ class NN(containers.Sequential):
                 logger.on_batch_begin(iter_num)
                 train_ins = [train_X[start:end], train_y[start:end]]
                 [train_loss, train_acc] = self._train_acc(*train_ins)
-                grads = self._get_grads(*train_ins)
-                pdb.set_trace()
+                #grads_val = self._get_grads(*train_ins)
+                #prob_val = self._get_prob(train_X[start:end])
+                #pdb.set_trace()
                 batch_logs = {'loss':train_loss, 'size':batch_size}
                 batch_logs['accuracy'] = train_acc
                 logger.on_batch_end(iter_num, batch_logs)

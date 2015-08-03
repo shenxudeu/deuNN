@@ -43,7 +43,6 @@ test_X = test_X.astype("float32")
 train_X /= 255
 valid_X /= 255
 test_X  /= 255
-pdb.set_trace()
 
 # NN architecture
 model = NN(checkpoint_fn)
