@@ -145,6 +145,11 @@ class NN(containers.Sequential):
         #        inputs = [self.X_train],
         #        outputs = self.py_x_train,
         #        allow_input_downcast=True)
+        #layer1_output = self.layers[0].get_output()
+        #self._get_layer1_out = theano.function(
+        #        inputs = [self.X_train],
+        #        outputs = layer1_output,
+        #        allow_input_downcast=True)
 
     def train(self, X, y , accuracy=False):
         ins = [X, y]
@@ -230,6 +235,7 @@ class NN(containers.Sequential):
                 [train_loss, train_acc] = self._train_acc(*train_ins)
                 #grads_val = self._get_grads(*train_ins)
                 #prob_val = self._get_prob(train_X[start:end])
+                #test_val = self._get_layer1_out(train_X[start:end])
                 #pdb.set_trace()
                 batch_logs = {'loss':train_loss, 'size':batch_size}
                 batch_logs['accuracy'] = train_acc
