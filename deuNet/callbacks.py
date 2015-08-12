@@ -44,7 +44,8 @@ class baseLogger(CallBack):
 
     def on_epoch_begin(self, epoch):
         if self.verbose:
-            print "Epoch %d "%epoch
+            if self.verbose == True:
+                print "Epoch %d "%epoch
             self.progbar = Progbar(target=self.params['nb_samples'],
                     verbose=self.verbose)
             self.current,self.tot_loss, self.tot_acc = 0, 0., 0.
