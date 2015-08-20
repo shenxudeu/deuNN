@@ -162,14 +162,16 @@ class Adadelta(object):
         grads = T.grad(loss, params)
 
         return grads
-
+    
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         caches = [shared_zeros(p.get_value().shape) for p in params]
         delta_caches = [shared_zeros(p.get_value().shape) for p in params]
         updates = []
-
-        for p,g,c,dc in zip(params, grads, caches, delta_caches):
+        
+        if not self.lr is list:
+            self.lr = np.ones((len(params),)).astype('float32') * self.lr
+        for p,g,c,dc,lr in zip(params, grads, caches, delta_caches, self.lr):
             # update caches
             new_c = self.rho * c + (1 - self.rho) * g ** 2
             updates.append((c,new_c))
@@ -177,7 +179,8 @@ class Adadelta(object):
             # update params
             update = g * T.sqrt(dc + self.epsilon) / T.sqrt(new_c + self.epsilon)
 
-            new_p = p - self.lr * update
+            #new_p = p - self.lr * update
+            new_p = p - lr * update
             updates.append((p, new_p))
 
             # update delta_caches
