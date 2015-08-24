@@ -7,6 +7,8 @@ import theano.tensor as T
 import warnings
 import time
 import numpy as np
+import logging
+import os
 
 from .utils.generic_utils import Progbar
 
@@ -83,9 +85,13 @@ class baseLogger(CallBack):
 
 
 class History(CallBack):
-    def __init__(self, params):
+    def __init__(self, params,hist_fn):
         self._set_params(params)
         self.verbose = self.params['verbose']
+        if os.path.isfile(hist_fn):
+            os.remove(hist_fn)
+        logging.basicConfig(filename=hist_fn,level=logging.INFO,format='%(asctime)s %(message)s')
+
 
     def on_train_begin(self):
         self.epoch = []
@@ -94,10 +100,10 @@ class History(CallBack):
         self.val_loss = []
         self.val_acc = []
         self.log_values = []
-        if not self.verbose: # not verbose means no base loger
-            self.progbar = Progbar(target=self.params['nb_epoch'],
-                    verbose=True)
-            self.current = 0
+        #if not self.verbose: # not verbose means no base loger
+        #    self.progbar = Progbar(target=self.params['nb_epoch'],
+        #            verbose=True)
+        #    self.current = 0
 
     def on_epoch_begin(self, epoch):
         self.tot_loss = 0.
@@ -117,22 +123,26 @@ class History(CallBack):
         #self.acc.append(logs.get('acc.'))
         self.val_loss.append(logs.get('val_loss'))
         self.val_acc.append(logs.get('val_acc'))
-        if self.verbose:
-            return
-        self.current += 1
-        if self.current < self.params['nb_epoch']:
-            self.log_values = []
-            self.log_values.append(('loss',self.loss[-1]))
-            self.log_values.append(('acc.',self.acc[-1]))
-            self.log_values.append(('val_loss',self.val_loss[-1]))
-            self.log_values.append(('val_acc',self.val_acc[-1]))
-            #pdb.set_trace()
-            self.progbar.update(self.current,self.log_values)
+        log_str = 'On epoch %d, train_loss = %.6f, train_acc = %.6f'%(epoch, self.loss[-1],self.acc[-1])
+        log_str += ', val_loss = %.6f, val_acc = %.6f'%(self.val_loss[-1],self.val_acc[-1])
+        logging.info(log_str)
+        #if self.verbose:
+        #    return
+        #self.current += 1
+        #if self.current < self.params['nb_epoch']:
+        #    self.log_values = []
+        #    self.log_values.append(('loss',self.loss[-1]))
+        #    self.log_values.append(('acc.',self.acc[-1]))
+        #    self.log_values.append(('val_loss',self.val_loss[-1]))
+        #    self.log_values.append(('val_acc',self.val_acc[-1]))
+        #    self.progbar.update(self.current,self.log_values)
     
     def on_train_end(self):
-        np.savetxt('.train_log.csv',(
-            self.epoch,self.loss, self.acc,self.val_loss,self.val_acc),
-            delimiter=',')
+        logging.info('Training END')
+        #hist_f.close()
+        #np.savetxt('.train_log.csv',(
+        #    self.epoch,self.loss, self.acc,self.val_loss,self.val_acc),
+        #    delimiter=',')
         
 
 class ModelCheckPoint(CallBack):
@@ -145,9 +155,11 @@ class ModelCheckPoint(CallBack):
         self.best_val_acc = 0.
         
     def on_epoch_end(self, epoch, logs={}, verbose=True):
-        if self.best_val_acc < logs.get('val_acc') and epoch > 5:
+        #if self.best_val_acc < logs.get('val_acc') and epoch > 5:
+        if logs.get('val_loss') < self.best_loss and epoch > 5:
             if verbose:
-                print "On epoch %d: validation loss improved from %0.5f to %0.5f, saving model to %s"%(epoch, self.best_val_acc, logs.get('val_acc')*1., self.fname)
+                print "On epoch %d: validation loss improved from %0.5f to %0.5f, saving model to %s"%(epoch, self.best_loss, logs.get('val_loss')*1., self.fname)
             self.best_val_acc = logs.get('val_acc')*1.
+            self.best_loss = logs.get('val_loss')*1.
             self.model.save_model(self.fname, overwrite=True)
 

@@ -17,11 +17,12 @@ class NN(containers.Sequential):
     compile theano graph funtions
     get updates and SGD, fit model with input data
     """
-    def __init__(self, checkpoint_fn=None):
+    def __init__(self, checkpoint_fn=None,log_fn='.default_log.log'):
         self.layers = []
         self.params = []
         self.regs = []
         self.checkpoint_fn = checkpoint_fn
+        self.log_fn = log_fn
 
     def get_config(self):
         configs = {}
@@ -208,6 +209,7 @@ class NN(containers.Sequential):
         self.verbose=verbose
         
         N = train_X.shape[0]
+        N_val = valid_X.shape[0]
         print 'Training Data: ', train_X.shape
         print 'Validation Data: ', valid_X.shape
         
@@ -216,10 +218,11 @@ class NN(containers.Sequential):
         start_time = time.clock()
         iter_num = 0
         best_valid_acc = -np.inf
+        best_valid_loss = np.inf
         
         train_params = {'verbose':verbose,'nb_samples':N,'nb_epoch':nb_epoch}
         logger = cbks.baseLogger(train_params)
-        history_log = cbks.History(train_params)
+        history_log = cbks.History(train_params, self.log_fn)
         if self.checkpoint_fn is not None:
             checkpoint = cbks.ModelCheckPoint(self.checkpoint_fn,self)
         history_log.on_train_begin()
@@ -242,8 +245,21 @@ class NN(containers.Sequential):
                 logger.on_batch_end(iter_num, batch_logs)
                 history_log.on_batch_end(iter_num, batch_logs)
                                       
-            [valid_loss, valid_acc] = self._get_acc_loss(*valid_ins)
-            if valid_acc > best_valid_acc:
+            #[valid_loss, valid_acc] = self._get_acc_loss(*valid_ins)
+            # batch forward on valid dataset, solve the out of memory issue
+            valid_loss_total, valid_acc_total = 0., 0.
+            nb_seen = 0.
+            for start, end in zip(range(0,N_val,batch_size), range(batch_size,N_val,batch_size)):
+                [val_loss_, val_acc_] = self._get_acc_loss(valid_X[start:end],valid_y[start:end])
+                valid_loss_total += val_loss_ * batch_size
+                valid_acc_total += val_acc_ * batch_size
+                nb_seen += batch_size
+            valid_loss = valid_loss_total / nb_seen
+            valid_acc  = valid_acc_total  / nb_seen
+            
+            #if valid_acc > best_valid_acc:
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
                 best_valid_acc = valid_acc
             epoch_logs = {'val_loss':valid_loss, 'val_acc':valid_acc}
             logger.on_epoch_end(epoch, epoch_logs)

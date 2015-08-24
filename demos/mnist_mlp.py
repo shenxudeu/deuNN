@@ -29,6 +29,7 @@ nb_hidden1 = 500
 nb_hidden2 = 500
 
 checkpoint_fn = '.trained_net.h5'
+log_fn = '.trained_log.log'
 
 (train_X, train_y), (test_X, test_y) = mnist.load_data()
 valid_X, valid_y = test_X, test_y
@@ -52,7 +53,7 @@ valid_y = np_utils.one_hot(valid_y,nb_classes)
 test_y = np_utils.one_hot(test_y,nb_classes)
 
 # NN architecture
-model = NN(checkpoint_fn)
+model = NN(checkpoint_fn,log_fn)
 model.add(AffineLayer(D, nb_hidden1, activation='sigmoid',reg_W=reg_W))
 model.add(Dropout(0.2,nb_hidden1, uncertainty=True))
 model.add(AffineLayer(nb_hidden1, nb_hidden2, activation='sigmoid',reg_W=reg_W))
