@@ -1,6 +1,7 @@
 import theano
 import theano.tensor as T
 import numpy as np
+import pprint
 import time
 
 from . import optimizers
@@ -194,7 +195,7 @@ class NN(containers.Sequential):
         return predictive_mean, predictive_std
 
     def fit(self, train_X, train_y, valid_X, valid_y,
-            batch_size=50, nb_epoch=20, verbose=True):
+            batch_size=50, nb_epoch=20, verbose=True, stopIter=np.inf):
         """
         NN fit function
         Inputs:
@@ -205,6 +206,9 @@ class NN(containers.Sequential):
             - batch_size: int
             - nb_epoch: int, number of epoch
             - verbose: bool
+            - stopIter: int, default = inf; 
+                stop training after this number of iterations, 
+                used for hypterparameter search
         """
         self.verbose=verbose
         
@@ -212,6 +216,10 @@ class NN(containers.Sequential):
         N_val = valid_X.shape[0]
         print 'Training Data: ', train_X.shape
         print 'Validation Data: ', valid_X.shape
+        pp = pprint.PrettyPrinter(indent=4)
+        config = self.get_config()
+        config['optimizer'] = self.optimizer.get_config()
+        pp.pprint(config)
         
         # mini-batch training
         print 'Start Training'
@@ -222,7 +230,7 @@ class NN(containers.Sequential):
         
         train_params = {'verbose':verbose,'nb_samples':N,'nb_epoch':nb_epoch}
         logger = cbks.baseLogger(train_params)
-        history_log = cbks.History(train_params, self.log_fn)
+        history_log = cbks.History(train_params, self.log_fn, config)
         if self.checkpoint_fn is not None:
             checkpoint = cbks.ModelCheckPoint(self.checkpoint_fn,self)
         history_log.on_train_begin()
@@ -233,6 +241,9 @@ class NN(containers.Sequential):
             history_log.on_epoch_begin(epoch)
             for start, end in zip(range(0,N,batch_size), range(batch_size,N,batch_size)):
                 iter_num += 1
+                if iter_num > stopIter:
+                    print "\n-----!! Training stop at %d iteration-----\n" %iter_num
+                    return
                 logger.on_batch_begin(iter_num)
                 train_ins = [train_X[start:end], train_y[start:end]]
                 [train_loss, train_acc] = self._train_acc(*train_ins)

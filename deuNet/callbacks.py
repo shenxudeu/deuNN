@@ -8,6 +8,7 @@ import warnings
 import time
 import numpy as np
 import logging
+import pprint
 import os
 
 from .utils.generic_utils import Progbar
@@ -85,12 +86,14 @@ class baseLogger(CallBack):
 
 
 class History(CallBack):
-    def __init__(self, params,hist_fn):
+    def __init__(self, params,hist_fn, config):
         self._set_params(params)
         self.verbose = self.params['verbose']
         if os.path.isfile(hist_fn):
             os.remove(hist_fn)
         logging.basicConfig(filename=hist_fn,level=logging.INFO,format='%(asctime)s %(message)s')
+        config_str = pprint.pformat(config, indent = 4)
+        logging.info(config_str)
 
 
     def on_train_begin(self):

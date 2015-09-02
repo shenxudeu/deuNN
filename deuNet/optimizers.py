@@ -71,6 +71,13 @@ class SGD(object):
 
         return updates
 
+    def get_config(self):
+        return {'name': self.__class__.__name__,
+                'lr': self.lr,
+                'momentum':self.momentum,
+                'decay':self.decay,
+                'nesterov':self.nesterov}
+
 
 class RMSprop(object):
     """
@@ -107,7 +114,12 @@ class RMSprop(object):
             updates.append((p, new_p))
 
         return updates
-
+    
+    def get_config(self):
+        return {'name': self.__class__.__name__,
+                'lr':self.lr,
+                'epsilon':self.epsilon,
+                'rho':self.rho}
 
 class Adagrad(object):
     """
@@ -140,6 +152,11 @@ class Adagrad(object):
             updates.append((p, new_p))
         
             return updates
+
+    def get_config(self):
+        return {'name': self.__class__.__name__,
+                'lr': self.lr,
+                'epsilon':self.epsilon}
 
 
 class Adadelta(object):
@@ -188,6 +205,12 @@ class Adadelta(object):
             updates.append((dc, new_dc))
         
         return updates
+
+    def get_config(self):
+        return {'name':self.__class__.__name__,
+                'lr': self.lr,
+                'epsilon':self.epsilon,
+                'rho':self.rho}
 
 
 from .utils.generic_utils import get_from_module

@@ -18,6 +18,9 @@ class Flatten(Layer):
         X = self.get_input(train)
         return T.flatten(X, outdim=2)
 
+    def get_config(self):
+        return {'name':self.__class__.__name__}
+
 class Convolution2D(Layer):
     """
     2D Convolution Layer
@@ -92,7 +95,7 @@ class Convolution2D(Layer):
                 'nb_col':self.nb_col,
                 'init':self.init.__name__,
                 'activation':self.activation.__name__,
-                'border_name':self.border_name,
+                'border_mode':self.border_mode,
                 'subsample':self.subsample,
                 'reg_W':self.reg_W
                 }
@@ -114,9 +117,9 @@ class MaxPooling2D(Layer):
 
     def get_config(self):
         return {'name':self.__class__.__name__,
-                'poolsize':self.pool_size,
-                'ignore_border':ignore_border,
-                'stride':stride}
+                'poolsize':self.poolsize,
+                'ignore_border':self.ignore_border,
+                'stride':self.stride}
 
 
 class ZeroPadding2D(Layer):
@@ -196,7 +199,7 @@ class Convolution1D(Layer):
                 'filter_length':self.filter_length,
                 'init':self.init.__name__,
                 'activation':self.activation.__name__,
-                'border_name':self.border_name,
+                'border_mode':self.border_mode,
                 'subsample':self.subsample,
                 'reg_W':self.reg_W}
 
