@@ -7,6 +7,9 @@ from .. utils.theano_utils import shared_zeros, shared_scalar
 from .. layers.core import Layer
 
 if theano.config.device[:3] == 'gpu':
+    """
+    Reference: http://deeplearning.net/software/theano/library/sandbox/cuda/dnn.html#libdoc-cuda-dnn
+    """
     from theano.sandbox.cuda import dnn # cuDnn conv function
 
 class Flatten(Layer):
