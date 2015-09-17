@@ -207,13 +207,11 @@ class Convolution1D(Layer):
         
         # upgrade to CuDNN Implementation
         if theano.config.device[:3] == 'gpu' and dnn.dnn_available():
-            print "Use CuDNN ---!"
             conv_out = dnn.dnn_conv(img=X,
                                     kerns=self.W,
                                     border_mode = self.border_mode,
                                     subsample=subsample)
         else:
-            print "Use Theano.conv2d ---!"
             conv_out = T.nnet.conv2d(X, self.W,
                     border_mode=self.border_mode, subsample=subsample)
         
