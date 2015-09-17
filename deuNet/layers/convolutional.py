@@ -6,6 +6,8 @@ from .. import activations, initializations
 from .. utils.theano_utils import shared_zeros, shared_scalar
 from .. layers.core import Layer
 
+import pdb
+
 if theano.config.device[:3] == 'gpu':
     """
     Reference: http://deeplearning.net/software/theano/library/sandbox/cuda/dnn.html#libdoc-cuda-dnn
@@ -87,8 +89,21 @@ class Convolution2D(Layer):
     # forward pass for 2D conv layer
     def get_output(self,train=False):
         X = self.get_input(train)
-        conv_out = T.nnet.conv2d(X, self.W,
-                border_mode=self.border_mode, subsample=self.subsample)
+
+        # upgrade to CuDNN Implementation
+        if theano.config.device[:3] == 'gpu' and dnn.dnn_available():
+            #print "Use CuDNN ---!"
+            conv_out = dnn.dnn_conv(img=X,
+                                    kerns=self.W,
+                                    border_mode = self.border_mode,
+                                    subsample=self.subsample)
+        else:
+            #print "Use Theano.conv2d ---!"
+            conv_out = T.nnet.conv2d(X, self.W,
+                    border_mode=self.border_mode, subsample=self.subsample)
+ 
+        #conv_out = T.nnet.conv2d(X, self.W,
+        #        border_mode=self.border_mode, subsample=self.subsample)
         
         return self.activation(conv_out + self.b.dimshuffle('x',0,'x','x'))
 
