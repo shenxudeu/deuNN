@@ -12,6 +12,8 @@ class BatchNormalization(Layer):
     divergence and vanish problem by normalizing features before non-linear activations.
 
     http://arxiv.org/pdf/1502.03167v3.pdf
+
+    We can follow this for the convnet: https://gist.github.com/f0k/f1a6bd3c8585c400c190
     """
     def __init__(self, input_shape, epsilon=1e-6,
             ema_lambda=0.9):
