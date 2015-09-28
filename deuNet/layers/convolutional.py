@@ -57,11 +57,11 @@ class Convolution2D(Layer):
     """
     def __init__(self, nb_filter, stack_size, nb_row, nb_col,
             init='glorot_uniform',activation='linear',
-            border_mode='valid',subsample=(1,1),
+            border_mode='valid',subsample=(1,1), pads=(1,1),
             reg_W=None, reg_b=0.,
             w_scale=1e-5):
 
-        if border_mode not in {'valid', 'full'}:
+        if border_mode not in {'valid', 'full', 'same'}:
             raise Exception("Invalid boder mode for ConvNet 2D")
 
         super(Convolution2D,self).__init__()
@@ -93,10 +93,20 @@ class Convolution2D(Layer):
         # upgrade to CuDNN Implementation
         if theano.config.device[:3] == 'gpu' and dnn.dnn_available():
             #print "Use CuDNN ---!"
-            conv_out = dnn.dnn_conv(img=X,
-                                    kerns=self.W,
-                                    border_mode = self.border_mode,
-                                    subsample=self.subsample)
+            if border_mode == 'same':
+                ## padding size could be directly specified.
+                ## this is very usefull when building VGG network
+                ## out_size = (in_size + 2*pad - win_size)/d_size + 1
+                ## normally out_size = in_size + 2*pad - win_size + 1
+                assert(self.subsample == (1,1))
+                conv_out = dnn.dnn_conv(img=X,
+                                        kens=self.W,
+                                        border_mode=pads)
+            else:
+                conv_out = dnn.dnn_conv(img=X,
+                                        kerns=self.W,
+                                        border_mode = self.border_mode,
+                                        subsample=self.subsample)
         else:
             #print "Use Theano.conv2d ---!"
             conv_out = T.nnet.conv2d(X, self.W,

@@ -17,11 +17,13 @@ class SGD(object):
     """
     abstract object: stocastic graident descent optimization method
     """
-    def __init__(self, lr=0.01, momentum=None,decay=None,nesterov=None):
+    def __init__(self, lr=0.01, momentum=None,decay=None,nesterov=None,decay_freq=25,n_batchs=100):
         self.lr = lr
         self.iterations = shared_scalar(0.)
         self.momentum = momentum
         self.decay = decay
+        self.decay_freq = decay_freq # decay learning every decay_freq epochs
+        self.n_bachs = n_batchs # number of batchs in one epoch
         self.nesterov = nesterov
     
     def set_lr(self, lr=0.01):
@@ -50,7 +52,8 @@ class SGD(object):
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         if self.decay is not None:
-            lr = self.lr * (1. / (1. + self.decay * self.iterations))
+            decay_factor = self.iterations/self.n_batchs/self.decay_freq
+            lr = self.lr * (1. / (1. + self.decay * decay_factor))
         else:
             lr = self.lr
         updates = [(self.iterations, self.iterations+1.)]
@@ -76,6 +79,7 @@ class SGD(object):
                 'lr': self.lr,
                 'momentum':self.momentum,
                 'decay':self.decay,
+                'decay_freq':self.decay_freq,
                 'nesterov':self.nesterov}
 
 
