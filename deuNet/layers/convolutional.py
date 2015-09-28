@@ -73,6 +73,7 @@ class Convolution2D(Layer):
         self.nb_row = nb_row
         self.nb_col = nb_col
         self.subsample = subsample
+        self.pads = pads
     
         self.border_mode = border_mode
 
@@ -93,7 +94,7 @@ class Convolution2D(Layer):
         # upgrade to CuDNN Implementation
         if theano.config.device[:3] == 'gpu' and dnn.dnn_available():
             #print "Use CuDNN ---!"
-            if border_mode == 'same':
+            if self.border_mode == 'same':
                 ## padding size could be directly specified.
                 ## this is very usefull when building VGG network
                 ## out_size = (in_size + 2*pad - win_size)/d_size + 1
@@ -101,7 +102,7 @@ class Convolution2D(Layer):
                 assert(self.subsample == (1,1))
                 conv_out = dnn.dnn_conv(img=X,
                                         kens=self.W,
-                                        border_mode=pads)
+                                        border_mode=self.pads)
             else:
                 conv_out = dnn.dnn_conv(img=X,
                                         kerns=self.W,
