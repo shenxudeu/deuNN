@@ -101,7 +101,7 @@ class Convolution2D(Layer):
                 ## normally out_size = in_size + 2*pad - win_size + 1
                 assert(self.subsample == (1,1))
                 conv_out = dnn.dnn_conv(img=X,
-                                        kens=self.W,
+                                        kerns=self.W,
                                         border_mode=self.pads)
             else:
                 conv_out = dnn.dnn_conv(img=X,
