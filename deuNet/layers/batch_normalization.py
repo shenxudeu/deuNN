@@ -41,7 +41,7 @@ class BatchNormalization(Layer):
         self.params = [self.gamma, self.beta]
         
     
-    def get_output(self, train):
+    def get_output(self, train=False):
         """
         This implementation can handle AffineLayer as well as
         Convolutional layer. We assume the second axes is the feature:
