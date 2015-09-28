@@ -23,7 +23,7 @@ class SGD(object):
         self.momentum = momentum
         self.decay = decay
         self.decay_freq = decay_freq # decay learning every decay_freq epochs
-        self.n_bachs = n_batchs # number of batchs in one epoch
+        self.n_batchs = n_batchs # number of batchs in one epoch
         self.nesterov = nesterov
     
     def set_lr(self, lr=0.01):
