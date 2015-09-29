@@ -33,6 +33,9 @@ class NN(containers.Sequential):
 
     def get_lr(self):
         return self.learning_rate
+
+    def reset_lr(self):
+        self.optimizer.set_lr(self.learning_rate)
     
     def get_w_decay(self):
         config = self.get_config()
@@ -45,8 +48,8 @@ class NN(containers.Sequential):
         return w_decay + 1e-12
 
     def compile(self, optimizer, loss, reg_type='L2', learning_rate = 0.01,
-            class_mode="categorical",momentum=None,lr_decay=None,
-            nesterov=False,rho=0.01,decay_freq=1000,n_batchs=1000):
+            class_mode="categorical",momentum=None,lr_decay=None,w_decay=None,
+            nesterov=False,rho=0.01):
         """
         Build and compile theano graph functions
         Inputs:
@@ -59,9 +62,8 @@ class NN(containers.Sequential):
         if optimizer == 'SGD':
             self.optimizer.set_momentum(momentum)
             self.optimizer.set_lr_decay(lr_decay)
+            self.optimizer.set_w_decay(w_decay)
             self.optimizer.set_nesterov(nesterov, momentum)
-	    self.optimizer.set_n_batchs(n_batchs)
-	    self.optimizer.set_decay_freq(decay_freq)
         elif optimizer == 'RMSprop' or optimizer == 'Adadelta':
             self.optimizer.set_rho(rho)
         #self.optimizer = RMSprop(lr=1e-2,rho=0.9)
@@ -197,7 +199,8 @@ class NN(containers.Sequential):
         return predictive_mean, predictive_std
 
     def fit(self, train_X, train_y, valid_X, valid_y,
-            batch_size=50, nb_epoch=20, verbose=True, stopIter=np.inf):
+            batch_size=50, nb_epoch=20, verbose=True, stopIter=np.inf,
+            epoch_step=100,lr_drop_rate=1.):
         """
         NN fit function
         Inputs:
@@ -239,6 +242,12 @@ class NN(containers.Sequential):
         
         valid_ins = [valid_X, valid_y]
         for epoch in xrange(nb_epoch):
+            if epoch > 0 and epoch % epoch_step == 0:
+                self.learning_rate *= lr_drop_rate
+                self.reset_lr()
+                print "\n---On eopch %d, drop lr to %.1e by %.2f\n"%(epoch,
+                        self.learning_rate, lr_drop_rate)
+
             logger.on_epoch_begin(epoch)
             history_log.on_epoch_begin(epoch)
             for start, end in zip(range(0,N,batch_size), range(batch_size,N,batch_size)):

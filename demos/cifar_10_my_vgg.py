@@ -16,13 +16,16 @@ from deuNet.layers.batch_normalization import BatchNormalization
 import pdb
 np.random.seed(1984)
 
-batch_size = 32
+batch_size = 128
 nb_classes = 10
 nb_epoch = 100
 learning_rate = 0.01
 w_scale = 1e-2
 momentum = 0.9
 lr_decay = 1e-7
+w_decay = 5e-4
+epoch_step = 25
+lr_drop_rate = 0.5
 nesterov = True
 rho = 0.9
 reg_W = 0.
@@ -31,6 +34,7 @@ checkpoint_fn = '.trained_cifar10_cnn.h5'
 
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
+
 
 # convert data_y to one-hot
 train_y = np_utils.one_hot(train_y, nb_classes)
@@ -44,25 +48,46 @@ train_X /= 255
 valid_X /= 255
 test_X  /= 255
 
+
+pool  = lambda x, y, kernel, stride: ((x-kernel)/stride+1, (y-kernel)/stride+1) 
+
+def ConvSame(nInputFilters,nOutputFilters, model):
+    model.add(Convolution2D(nOutputFilters,nInputFilters,3,3, border_mode='full',
+        init='glorot_uniform',activation='relu', reg_W=reg_W))
+    model.add(Convolution2D(nOutputFilters,nOutputFilters,3,3, border_mode='valid',
+        init='glorot_uniform',activation='relu', reg_W=reg_W))
+    return model
+
+ignore_border = True
+
 # NN architecture
 model = NN(checkpoint_fn)
 
-model.add(Convolution2D(32,3,3,3, border_mode='full',
-    init='glorot_uniform',activation='relu', reg_W=reg_W))
-model.add(Convolution2D(32,32,3,3, border_mode='valid',
-    init='glorot_uniform',activation='relu', reg_W=reg_W))
-model.add(MaxPooling2D(pool_size=(2,2)))
-model.add(Dropout(0.25, uncertainty=False))
+nh, nw = (32, 32)
 
-model.add(Convolution2D(64,32,3,3, border_mode='full',
-    init='glorot_uniform',activation='relu', reg_W=reg_W))
-model.add(Convolution2D(64,64,3,3, border_mode='valid',
-    init='glorot_uniform',activation='relu', reg_W=reg_W))
-model.add(MaxPooling2D(pool_size=(2,2)))
+model = ConvSame(3,32, model)
+model.add(Dropout(0.25, uncertainty=False)) 
+model = ConvSame(32,32, model)
+model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
+nh, nw = pool(nh, nw, 2,2)
+#model.add(Dropout(0.25, uncertainty=False)) 
+
+
+model = ConvSame(32,64, model)
 model.add(Dropout(0.25,uncertainty=False))
+model = ConvSame(64,64, model)
+model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
+nh, nw = pool(nh, nw, 2,2)
+#model.add(Dropout(0.25,uncertainty=False))
+
+model = ConvSame(64,128, model)
+model.add(Dropout(0.25,uncertainty=False))
+model = ConvSame(128,128, model)
+model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
+nh, nw = pool(nh, nw, 2,2)
 
 model.add(Flatten())
-model.add(AffineLayer(8*8*64, 512,activation='relu',reg_W=reg_W, init='glorot_uniform'))
+model.add(AffineLayer(nh*nw*128, 512,activation='relu',reg_W=reg_W, init='glorot_uniform'))
 model.add(Dropout(0.5, uncertainty=False))
 model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=reg_W,init='glorot_uniform'))
 
@@ -71,11 +96,12 @@ model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=reg_W,init='glo
 print 'Compile NN ...'
 model.compile(optimizer='SGD', loss='categorical_crossentropy',
         reg_type='L2', learning_rate = learning_rate, momentum=momentum,
-        lr_decay=lr_decay, nesterov=nesterov, rho=rho)
+        lr_decay=lr_decay, nesterov=nesterov, rho=rho, w_decay=w_decay)
 
 # Train NN
 model.fit(train_X, train_y, valid_X, valid_y,
-        batch_size=batch_size, nb_epoch=nb_epoch, verbose=True)
+        batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
+        epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
 
 # Test NN
 model.get_test_accuracy(test_X, test_y)

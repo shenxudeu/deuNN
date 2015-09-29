@@ -17,14 +17,12 @@ class SGD(object):
     """
     abstract object: stocastic graident descent optimization method
     """
-    def __init__(self, lr=0.01, momentum=None,decay=None,nesterov=None,decay_freq=25,n_batchs=100):
+    def __init__(self, lr=0.01, momentum=None,decay=None,nesterov=None,w_decay=None):
         self.lr = lr
         self.iterations = shared_scalar(0.)
-        self.n_iter = 0.
         self.momentum = momentum
         self.decay = decay
-        self.decay_freq = decay_freq # decay learning every decay_freq epochs
-        self.n_batchs = n_batchs # number of batchs in one epoch
+        self.w_decay = w_decay
         self.nesterov = nesterov
     
     def set_lr(self, lr=0.01):
@@ -33,14 +31,12 @@ class SGD(object):
     def set_momentum(self, momentum=0.9):
         self.momentum = momentum
 
-    def set_lr_decay(self, decay=0.99):
+    def set_lr_decay(self, decay=1e-5):
         self.decay = decay
 
-    def set_n_batchs(self,n_batchs):
-	self.n_batchs = n_batchs
-    
-    def set_decay_freq(self, decay_freq):
-	self.decay_freq = decay_freq
+    def set_w_decay(self, w_decay=1e-4):
+        self.w_decay = w_decay
+
 
     def set_nesterov(self, nesterov=True,momentum=0.9):
         """
@@ -59,15 +55,18 @@ class SGD(object):
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         if self.decay is not None:
-            decay_factor = int(self.n_iter/self.n_batchs/self.decay_freq)
+            lr = self.lr * (1./(1. + self.decay*self.iterations))
+            #decay_factor = int(self.n_iter/self.n_batchs/self.decay_freq)
             #lr = self.lr * (1. / (1. + self.decay * decay_factor))
-            lr = self.lr * (1.-self.decay)**decay_factor
+            #lr = self.lr * (1.-self.decay)**decay_factor
         else:
             lr = self.lr
         updates = [(self.iterations, self.iterations+1.)]
-	self.n_iter += 1
 
         for p, g in zip(params, grads):
+            if self.w_decay is not None:
+                g += p*self.w_decay
+
             if self.momentum is not None:
                 m = shared_zeros(p.get_value().shape)
                 v = self.momentum * m - lr * g
@@ -86,9 +85,8 @@ class SGD(object):
     def get_config(self):
         return {'name': self.__class__.__name__,
                 'lr': self.lr,
+                'w_decay': self.w_decay,
                 'momentum':self.momentum,
-                'decay':self.decay,
-                'decay_freq':self.decay_freq,
                 'nesterov':self.nesterov}
 
 

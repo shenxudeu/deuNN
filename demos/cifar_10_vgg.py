@@ -33,8 +33,6 @@ log_fn = '.cifar10_vgg.log'
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
 
-n_batchs = int(train_X.shape[0] / batch_size)
-
 # convert data_y to one-hot
 train_y = np_utils.one_hot(train_y, nb_classes)
 valid_y = np_utils.one_hot(valid_y, nb_classes)
@@ -64,24 +62,24 @@ model = NN(checkpoint_fn)
 nh, nw = (32, 32)
 ignore_border = True
 model = ConvBNRelu(64, 3, model)
-model.add(Dropout(0.7, uncertainty=False))
+model.add(Dropout(0.3, uncertainty=False))
 
 model = ConvBNRelu(64, 64, model)
 model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
 nh, nw = pool(nh, nw, 2,2)
 
 model = ConvBNRelu(128, 64, model)
-model.add(Dropout(0.6, uncertainty=False))
+model.add(Dropout(0.4, uncertainty=False))
 
 model = ConvBNRelu(128, 128, model)
 model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
 nh, nw = pool(nh, nw, 2,2)
 
 model = ConvBNRelu(256, 128, model)
-model.add(Dropout(0.6, uncertainty=False))
+model.add(Dropout(0.4, uncertainty=False))
 
 model = ConvBNRelu(256, 256, model)
-model.add(Dropout(0.6, uncertainty=False))
+model.add(Dropout(0.4, uncertainty=False))
 
 model = ConvBNRelu(256, 256, model)
 model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
@@ -120,7 +118,7 @@ model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=reg_W,init='glo
 print 'Compile NN ...'
 model.compile(optimizer='SGD', loss='categorical_crossentropy',
         reg_type='L2', learning_rate = learning_rate, momentum=momentum,
-        lr_decay=lr_decay, nesterov=nesterov, rho=rho,decay_freq=25,n_batchs=n_batchs)
+        lr_decay=lr_decay, nesterov=nesterov, rho=rho)
 
 # Train NN
 model.fit(train_X, train_y, valid_X, valid_y,
