@@ -58,6 +58,16 @@ def ConvSame(nInputFilters,nOutputFilters, model):
         init='glorot_uniform',activation='relu', reg_W=reg_W))
     return model
 
+def ConvSameBN(nInputFilters,nOutputFilters, model):
+    model.add(Convolution2D(nOutputFilters,nInputFilters,3,3, border_mode='full',
+        init='glorot_uniform',activation='linear', reg_W=reg_W))
+    model.add(BatchNormalization((1,nOutputFilters,1,1),activation='relu'))
+    model.add(Convolution2D(nOutputFilters,nOutputFilters,3,3, border_mode='valid',
+        init='glorot_uniform',activation='linear', reg_W=reg_W))
+    model.add(BatchNormalization((1,nOutputFilters,1,1),activation='relu'))
+    return model
+
+
 ignore_border = True
 
 # NN architecture
@@ -65,29 +75,35 @@ model = NN(checkpoint_fn)
 
 nh, nw = (32, 32)
 
-model = ConvSame(3,32, model)
+BN = False
+if BN:
+    ConvS = ConvSameBN
+else:
+    ConvS = ConvSame
+
+model = ConvS(3,32, model)
 model.add(Dropout(0.25, uncertainty=False)) 
-model = ConvSame(32,32, model)
+model = ConvS(32,32, model)
 model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
 nh, nw = pool(nh, nw, 2,2)
 #model.add(Dropout(0.25, uncertainty=False)) 
 
 
-model = ConvSame(32,64, model)
+model = ConvS(32,64, model)
 model.add(Dropout(0.25,uncertainty=False))
-model = ConvSame(64,64, model)
+model = ConvS(64,64, model)
 model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
 nh, nw = pool(nh, nw, 2,2)
 #model.add(Dropout(0.25,uncertainty=False))
 
-model = ConvSame(64,128, model)
-model.add(Dropout(0.25,uncertainty=False))
-model = ConvSame(128,128, model)
-model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
-nh, nw = pool(nh, nw, 2,2)
+#model = ConvSame(64,128, model)
+#model.add(Dropout(0.25,uncertainty=False))
+#model = ConvSame(128,128, model)
+#model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
+#nh, nw = pool(nh, nw, 2,2)
 
 model.add(Flatten())
-model.add(AffineLayer(nh*nw*128, 512,activation='relu',reg_W=reg_W, init='glorot_uniform'))
+model.add(AffineLayer(nh*nw*64, 512,activation='relu',reg_W=reg_W, init='glorot_uniform'))
 model.add(Dropout(0.5, uncertainty=False))
 model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=reg_W,init='glorot_uniform'))
 
