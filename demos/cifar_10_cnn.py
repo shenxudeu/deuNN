@@ -11,6 +11,7 @@ from deuNet.datasets import cifar10
 from deuNet.models import NN
 from deuNet.layers.core import AffineLayer, Dropout
 from deuNet.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
+from deuNet.layers.batch_normalization import BatchNormalization
 
 import pdb
 np.random.seed(1984)
@@ -21,7 +22,7 @@ nb_epoch = 100
 learning_rate = 0.01
 w_scale = 1e-2
 momentum = 0.9
-lr_decay = 1e-6
+lr_decay = 0.1
 nesterov = True
 rho = 0.9
 reg_W = 0.
@@ -30,6 +31,8 @@ checkpoint_fn = '.trained_cifar10_cnn.h5'
 
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
+
+n_batchs = train_X.shape[0]
 
 # convert data_y to one-hot
 train_y = np_utils.one_hot(train_y, nb_classes)
@@ -70,7 +73,7 @@ model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=reg_W,init='glo
 print 'Compile NN ...'
 model.compile(optimizer='SGD', loss='categorical_crossentropy',
         reg_type='L2', learning_rate = learning_rate, momentum=momentum,
-        lr_decay=lr_decay, nesterov=nesterov, rho=rho)
+        lr_decay=lr_decay, nesterov=nesterov, rho=rho,decay_freq=5,n_batchs=n_batchs)
 
 # Train NN
 model.fit(train_X, train_y, valid_X, valid_y,

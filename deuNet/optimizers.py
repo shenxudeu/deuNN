@@ -20,6 +20,7 @@ class SGD(object):
     def __init__(self, lr=0.01, momentum=None,decay=None,nesterov=None,decay_freq=25,n_batchs=100):
         self.lr = lr
         self.iterations = shared_scalar(0.)
+        self.n_iter = 0.
         self.momentum = momentum
         self.decay = decay
         self.decay_freq = decay_freq # decay learning every decay_freq epochs
@@ -34,6 +35,12 @@ class SGD(object):
 
     def set_lr_decay(self, decay=0.99):
         self.decay = decay
+
+    def set_n_batchs(self,n_batchs):
+	self.n_batchs = n_batchs
+    
+    def set_decay_freq(self, decay_freq):
+	self.decay_freq = decay_freq
 
     def set_nesterov(self, nesterov=True,momentum=0.9):
         """
@@ -52,11 +59,13 @@ class SGD(object):
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         if self.decay is not None:
-            decay_factor = self.iterations/self.n_batchs/self.decay_freq
-            lr = self.lr * (1. / (1. + self.decay * decay_factor))
+            decay_factor = int(self.n_iter/self.n_batchs/self.decay_freq)
+            #lr = self.lr * (1. / (1. + self.decay * decay_factor))
+            lr = self.lr * (1.-self.decay)**decay_factor
         else:
             lr = self.lr
         updates = [(self.iterations, self.iterations+1.)]
+	self.n_iter += 1
 
         for p, g in zip(params, grads):
             if self.momentum is not None:

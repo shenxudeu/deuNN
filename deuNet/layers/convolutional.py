@@ -57,7 +57,7 @@ class Convolution2D(Layer):
     """
     def __init__(self, nb_filter, stack_size, nb_row, nb_col,
             init='glorot_uniform',activation='linear',
-            border_mode='valid',subsample=(1,1), pads=(1,1),
+            border_mode='valid',subsample=(1,1),
             reg_W=None, reg_b=0.,
             w_scale=1e-5):
 
@@ -73,7 +73,6 @@ class Convolution2D(Layer):
         self.nb_row = nb_row
         self.nb_col = nb_col
         self.subsample = subsample
-        self.pads = pads
     
         self.border_mode = border_mode
 
@@ -97,12 +96,14 @@ class Convolution2D(Layer):
             if self.border_mode == 'same':
                 ## padding size could be directly specified.
                 ## this is very usefull when building VGG network
-                ## out_size = (in_size + 2*pad - win_size)/d_size + 1
+                ## out_size = (in_size + 2*pad - win_size)/stride + 1
                 ## normally out_size = in_size + 2*pad - win_size + 1
-                assert(self.subsample == (1,1))
+                #assert(self.subsample == (1,1))
+		padx = (self.nb_row - self.subsample[0]) / 2
+		pady = (self.nb_col - self.subsample[1]) / 2
                 conv_out = dnn.dnn_conv(img=X,
                                         kerns=self.W,
-                                        border_mode=self.pads)
+                                        border_mode=(padx, pady))
             else:
                 conv_out = dnn.dnn_conv(img=X,
                                         kerns=self.W,
