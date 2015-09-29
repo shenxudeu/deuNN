@@ -31,6 +31,7 @@ rho = 0.9
 reg_W = 0.
 
 checkpoint_fn = '.trained_cifar10_cnn.h5'
+log_fn = '.cifar_my_vgg.log'
 
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
@@ -71,7 +72,7 @@ def ConvSameBN(nInputFilters,nOutputFilters, model):
 ignore_border = True
 
 # NN architecture
-model = NN(checkpoint_fn)
+model = NN(checkpoint_fn, log_fn)
 
 nh, nw = (32, 32)
 
@@ -96,6 +97,12 @@ model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
 nh, nw = pool(nh, nw, 2,2)
 #model.add(Dropout(0.25,uncertainty=False))
 
+model = ConvS(64,128, model)
+model.add(Dropout(0.25,uncertainty=False))
+model = ConvS(128,128, model)
+model.add(MaxPooling2D(pool_size=(2,2),ignore_border=ignore_border))
+nh, nw = pool(nh, nw, 2,2)
+
 #model = ConvSame(64,128, model)
 #model.add(Dropout(0.25,uncertainty=False))
 #model = ConvSame(128,128, model)
@@ -103,7 +110,7 @@ nh, nw = pool(nh, nw, 2,2)
 #nh, nw = pool(nh, nw, 2,2)
 
 model.add(Flatten())
-model.add(AffineLayer(nh*nw*64, 512,activation='relu',reg_W=reg_W, init='glorot_uniform'))
+model.add(AffineLayer(nh*nw*128, 512,activation='relu',reg_W=reg_W, init='glorot_uniform'))
 model.add(Dropout(0.5, uncertainty=False))
 model.add(AffineLayer(512, nb_classes,activation='softmax',reg_W=reg_W,init='glorot_uniform'))
 
