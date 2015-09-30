@@ -12,9 +12,12 @@ from deuNet.models import NN
 from deuNet.layers.core import AffineLayer, Dropout
 from deuNet.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 from deuNet.layers.batch_normalization import BatchNormalization,LRN2D
+from deuNet.preprocessing.image import ImageDataGenerator
 
 import pdb
 np.random.seed(1984)
+
+DATA_AUGMENTATION = True
 
 batch_size = 128
 nb_classes = 10
@@ -31,7 +34,10 @@ rho = 0.9
 reg_W = 0.
 
 checkpoint_fn = '.trained_cifar10_cnn.h5'
-log_fn = '.cifar10_myAlex.log'
+if DATA_AUGMENTATION:
+    log_fn = '.cifar10_myAlex_aug.log'
+else:
+    log_fn = '.cifar10_myAlex.log'
 
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
@@ -114,9 +120,35 @@ model.compile(optimizer='SGD', loss='categorical_crossentropy',
         lr_decay=lr_decay, nesterov=nesterov, rho=rho, w_decay=w_decay)
 
 # Train NN
-model.fit(train_X, train_y, valid_X, valid_y,
-        batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
-        epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
+if not DATA_AUGMENTATION:
+    model.fit(train_X, train_y, valid_X, valid_y,
+            batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
+            epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
+
+else:
+    print "Using Data Augmentation"
+    datagen = ImageDataGenerator(
+            featurewise_center=True,
+            samplewise_center=False,
+            featurewise_std_normalization=True,
+            samplewise_std_normalization=False,
+            
+            zca_whitening=False,
+            rotation_range = 20,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            horizontal_flip=True,
+            vertical_flip=False)
+    
+    datagen.fit(train_X)
+
+    trainIterator = datagen.flow(train_X, train_y, batch_size=batch_size,transform=True)
+    validIterator = datagen.flow(valid_X, valid_y, batch_size=batch_size,transform=False)
+    
+    model.fit_iterator(trainIterator, validIterator, len(train_X),
+            batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
+            epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
+
 
 # Test NN
 model.get_test_accuracy(test_X, test_y)
