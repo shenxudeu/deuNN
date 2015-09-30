@@ -1,4 +1,5 @@
 import numpy as np
+import cPickle
 
 def one_hot(y, nb_classes=None):
     N = len(y)
@@ -19,4 +20,14 @@ def np_softmax(X):
     e_x = np.exp(X - X.max(axis=1,keepdims=True))
     out = e_x / e_x.sum(axis=1, keepdims=True)
     return out
+
+def DataIterator(fn_list,batch_size):
+    for fn in fn_list:
+        with open(fn,'rb') as f:
+            [X,y] = cPickle.load(f)
+        N = len(X)
+        for start, end in zip(range(0,N,batch_size), range(batch_size,N,batch_size)):
+            yield X[start:end], y[start:end]
+    
+
 
