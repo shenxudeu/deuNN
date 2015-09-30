@@ -19,7 +19,7 @@ np.random.seed(1984)
 batch_size = 128
 nb_classes = 10
 nb_epoch = 100
-learning_rate = 1.
+learning_rate = .5
 w_scale = 1e-2
 momentum = 0.9
 lr_decay = 1e-7
