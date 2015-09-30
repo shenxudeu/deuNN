@@ -24,8 +24,8 @@ w_scale = 1e-2
 momentum = 0.9
 lr_decay = 1e-7
 w_decay = 5e-4
-epoch_step = 25
-lr_drop_rate = 0.5
+epoch_step = 10
+lr_drop_rate = 0.1
 nesterov = True
 rho = 0.9
 reg_W = 0.
@@ -76,6 +76,7 @@ model = NN(checkpoint_fn,log_fn)
 
 nh, nw = (32, 32)
 
+BN = False
 if BN:
     ConvS = ConvSameBN
 else:
