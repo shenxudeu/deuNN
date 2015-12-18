@@ -7,4 +7,4 @@ Most modern NN components (eg. maxout, dropout, and etc) will be included. Deep 
 Ipython notebooks are also included demonstrating some state-of-art NN architectures, such as Alex Net, VGG net, LSTM, and etc.
 
 # License
-The MIT License (MIT) Copyright (c) 2015 Shen Xu
+The MIT License (MIT) Copyright (c) 2015 Rosanne Liu & Shen Xu
