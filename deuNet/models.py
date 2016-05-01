@@ -103,7 +103,6 @@ class NN(containers.Sequential):
             acc_func = losses.get('mean_absolute_error')
             accuracy_train = acc_func(self.py_x_train,self.y)
             accuracy_test = acc_func(self.py_x_test, self.y)
-        
         self.class_mode = class_mode
 
         updates = self.optimizer.get_updates(total_loss_train, self.params)
@@ -138,6 +137,13 @@ class NN(containers.Sequential):
         self._get_output = theano.function(
                 inputs = [self.X_test],
                 outputs = self.py_x_test,
+                allow_input_downcast=True)
+
+        # get activiations
+        self.layer_x_test = self.layers[1].get_output(train=False)
+        self._get_layer_output = theano.function(
+                inputs = [self.X_test],
+                outputs = self.layer_x_test,
                 allow_input_downcast=True)
 
         #grads_data = self.optimizer.get_gradients(total_loss_train, self.params)
@@ -199,7 +205,8 @@ class NN(containers.Sequential):
         return predictive_mean, predictive_std
     
     
-    def fit_iterator(self, trainIterator, validIterator, N,
+    def fit_iterator(self, dataGen, N,
+            train_X=None,train_y=None,valid_X=None,valid_y=None,
             batch_size=50, nb_epoch=20, verbose=True, stopIter=np.inf,
             epoch_step=100,lr_drop_rate=1.):
         """
@@ -243,6 +250,12 @@ class NN(containers.Sequential):
         
         #valid_ins = [valid_X, valid_y]
         for epoch in xrange(nb_epoch):
+            if train_X is not None:
+                trainIterator = dataGen.flow(train_X,train_y,
+                                   batch_size=batch_size,transform=True)
+                validIterator = dataGen.flow(valid_X,valid_y,
+                                   batch_size=batch_size,transform=True)
+
             if epoch > 0 and epoch % epoch_step == 0:
                 self.learning_rate *= lr_drop_rate
                 self.reset_lr()
@@ -266,7 +279,6 @@ class NN(containers.Sequential):
                 batch_logs['accuracy'] = train_acc
                 logger.on_batch_end(iter_num, batch_logs)
                 history_log.on_batch_end(iter_num, batch_logs)
-                                      
             valid_loss_total, valid_acc_total = 0., 0.
             nb_seen = 0.
             #for start, end in zip(range(0,N_val,batch_size), range(batch_size,N_val,batch_size)):
@@ -429,7 +441,7 @@ class NN(containers.Sequential):
         f = h5py.File(filepath,'r')
         for k in xrange(f.attrs['nb_layers']):
             g = f['layer_{}'.format(k)]
-            weights = [g['param_{}'.format(i)] for i in xrange(g.attrs['nb_params'])]
+            weights = [np.array(g['param_{}'.format(i)]) for i in xrange(g.attrs['nb_params'])]
             self.layers[k].set_param_vals(weights)
         f.close()
 

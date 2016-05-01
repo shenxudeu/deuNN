@@ -21,14 +21,14 @@ DATA_AUGMENTATION = True
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 100
+nb_epoch = 200
 learning_rate = 0.01
 w_scale = 1e-2
 momentum = 0.9
 lr_decay = 1e-7
 w_decay = 5e-4
 epoch_step = 10
-lr_drop_rate = 0.1
+lr_drop_rate = 0.9
 nesterov = True
 rho = 0.9
 reg_W = 0.
@@ -142,10 +142,11 @@ else:
     
     datagen.fit(train_X)
 
-    trainIterator = datagen.flow(train_X, train_y, batch_size=batch_size,transform=True)
-    validIterator = datagen.flow(valid_X, valid_y, batch_size=batch_size,transform=False)
-    
-    model.fit_iterator(trainIterator, validIterator, len(train_X),
+    #trainIterator = datagen.flow(train_X, train_y, batch_size=batch_size,transform=True)
+    #validIterator = datagen.flow(valid_X, valid_y, batch_size=batch_size,transform=False)
+
+    model.fit_iterator(datagen, len(train_X),
+            train_X, train_y, valid_X, valid_y,
             batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
             epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
 
