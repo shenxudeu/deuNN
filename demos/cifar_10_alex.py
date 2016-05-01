@@ -30,7 +30,6 @@ reg_W = 0.
 checkpoint_fn = '.trained_cifar10_alex.h5'
 log_fn = '.cifar10_alex.log'
 
-#[train_X, train_y,valid_X, valid_y, test_X, test_y] = cifar_10.load_data()
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
 

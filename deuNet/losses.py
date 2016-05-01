@@ -43,7 +43,7 @@ def euclidean_loss(y_pred, y_true):
 
 def mean_squared_error(y_pred, y_true):
     #return T.mean(T.sqrt(T.max(y_pred,axis=1) - y_true))
-    return T.mean(T.sqrt(y_pred - y_true))
+    return T.mean(T.pow((y_pred - y_true),2))
 
 def mean_absolute_error(y_pred, y_true):
     """
@@ -85,3 +85,9 @@ from .utils.generic_utils import get_from_module
 def get(identifier):
     return get_from_module(identifier, globals(), 'losses')
 
+
+######################################################
+## Customized loss for angle difference measurement ##
+#####################################################
+def angular_mae(y_pred,y_true):
+    return T.arccos(T.cos(T.mean(T.abs_(y_pred - y_true))))

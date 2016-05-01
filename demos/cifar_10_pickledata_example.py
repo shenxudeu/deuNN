@@ -2,7 +2,8 @@
 Example of train a 2-layers Neural Network classifier on CIFAR-10 dataset
 """
 import numpy as np
-import sys
+import sys, os
+import cPickle
 
 sys.path.append("../../deuNet/")
 
@@ -12,32 +13,26 @@ from deuNet.models import NN
 from deuNet.layers.core import AffineLayer, Dropout
 from deuNet.layers.convolutional import Convolution2D,Flatten,MaxPooling2D
 from deuNet.layers.batch_normalization import BatchNormalization,LRN2D
-from deuNet.preprocessing.image import ImageDataGenerator
 
 import pdb
 np.random.seed(1984)
 
-DATA_AUGMENTATION = True
-
 batch_size = 128
 nb_classes = 10
-nb_epoch = 200
+nb_epoch = 100
 learning_rate = 0.01
 w_scale = 1e-2
 momentum = 0.9
 lr_decay = 1e-7
 w_decay = 5e-4
 epoch_step = 10
-lr_drop_rate = 0.9
+lr_drop_rate = 0.1
 nesterov = True
 rho = 0.9
 reg_W = 0.
 
 checkpoint_fn = '.trained_cifar10_cnn.h5'
-if DATA_AUGMENTATION:
-    log_fn = '.cifar10_myAlex_aug.log'
-else:
-    log_fn = '.cifar10_myAlex.log'
+log_fn = '.cifar10_myAlex.log'
 
 (train_X, train_y), (test_X, test_y) = cifar10.load_data()
 valid_X,valid_y = test_X, test_y
@@ -55,6 +50,30 @@ train_X /= 255
 valid_X /= 255
 test_X  /= 255
 
+N = len(train_X)
+
+# Generate cPickle files seperate the dataset
+def seg_data(X,y,fn_prefix,seg_size):
+    N = len(X)
+    seg_size = 500
+    fid = 0
+    for start, end in zip(range(0,N,seg_size), range(seg_size,N,seg_size)):
+        tmp = [X[start:end], y[start:end]]
+        fn = '%s_%d.plk'%(fn_prefix,fid)
+        with open(fn,'wb') as f:
+            cPickle.dump(tmp, f)
+            fid += 1
+try:
+    os.mkdir('cifar10SegData')
+except:
+    pass
+#seg_data(train_X,train_y, 'cifar10SegData/train',500)
+#seg_data(valid_X,valid_y, 'cifar10SegData/valid',500)
+
+#fn_list = list('cifar10SegData/train_%d.plk'%i for i in range(0,99))
+#for train_data in np_utils.DataIterator(fn_list,batch_size):
+#    print train_data[0].shape
+#    print train_data[0][0,:10]
 
 pool  = lambda x, y, kernel, stride: ((x-kernel)/stride+1, (y-kernel)/stride+1) 
 
@@ -120,36 +139,15 @@ model.compile(optimizer='SGD', loss='categorical_crossentropy',
         lr_decay=lr_decay, nesterov=nesterov, rho=rho, w_decay=w_decay)
 
 # Train NN
-if not DATA_AUGMENTATION:
-    model.fit(train_X, train_y, valid_X, valid_y,
-            batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
-            epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
+fn_list = list('cifar10SegData/train_%d.plk'%i for i in range(0,99))
+trainIterator = np_utils.DataIterator(fn_list,batch_size)
 
-else:
-    print "Using Data Augmentation"
-    datagen = ImageDataGenerator(
-            featurewise_center=True,
-            samplewise_center=False,
-            featurewise_std_normalization=True,
-            samplewise_std_normalization=False,
-            
-            zca_whitening=False,
-            rotation_range = 20,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            horizontal_flip=True,
-            vertical_flip=False)
-    
-    datagen.fit(train_X)
+fn_list = list('cifar10SegData/valid_%d.plk'%i for i in range(0,19))
+validIterator = np_utils.DataIterator(fn_list,batch_size)
 
-    #trainIterator = datagen.flow(train_X, train_y, batch_size=batch_size,transform=True)
-    #validIterator = datagen.flow(valid_X, valid_y, batch_size=batch_size,transform=False)
-
-    model.fit_iterator(datagen, len(train_X),
-            train_X, train_y, valid_X, valid_y,
-            batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
-            epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
-
+model.fit_iterator(trainIterator, validIterator, N, 
+        batch_size=batch_size, nb_epoch=nb_epoch, verbose=True,
+        epoch_step=epoch_step,lr_drop_rate=lr_drop_rate)
 
 # Test NN
 model.get_test_accuracy(test_X, test_y)

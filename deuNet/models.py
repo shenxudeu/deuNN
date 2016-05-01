@@ -103,7 +103,6 @@ class NN(containers.Sequential):
             acc_func = losses.get('mean_absolute_error')
             accuracy_train = acc_func(self.py_x_train,self.y)
             accuracy_test = acc_func(self.py_x_test, self.y)
-        
         self.class_mode = class_mode
 
         updates = self.optimizer.get_updates(total_loss_train, self.params)
@@ -138,6 +137,13 @@ class NN(containers.Sequential):
         self._get_output = theano.function(
                 inputs = [self.X_test],
                 outputs = self.py_x_test,
+                allow_input_downcast=True)
+
+        # get activiations
+        self.layer_x_test = self.layers[1].get_output(train=False)
+        self._get_layer_output = theano.function(
+                inputs = [self.X_test],
+                outputs = self.layer_x_test,
                 allow_input_downcast=True)
 
         #grads_data = self.optimizer.get_gradients(total_loss_train, self.params)
@@ -197,7 +203,108 @@ class NN(containers.Sequential):
             return predictive_mean, predictive_std, pred_prob_mean
         
         return predictive_mean, predictive_std
+    
+    
+    def fit_iterator(self, dataGen, N,
+            train_X=None,train_y=None,valid_X=None,valid_y=None,
+            batch_size=50, nb_epoch=20, verbose=True, stopIter=np.inf,
+            epoch_step=100,lr_drop_rate=1.):
+        """
+        NN fit function
+        Inputs:
+            - train_X: np.array
+            - train_y: np.array, one-hot if classification problem
+            - valid_X: np.array
+            - valid_y: np.array, one-hot if classification problem
+            - batch_size: int
+            - nb_epoch: int, number of epoch
+            - verbose: bool
+            - stopIter: int, default = inf; 
+                stop training after this number of iterations, 
+                used for hypterparameter search
+        """
+        self.verbose=verbose
+        
+        #N = train_X.shape[0]
+        #N_val = valid_X.shape[0]
+        #print 'Training Data: ', train_X.shape
+        #print 'Validation Data: ', valid_X.shape
+        pp = pprint.PrettyPrinter(indent=4)
+        config = self.get_config()
+        config['optimizer'] = self.optimizer.get_config()
+        pp.pprint(config)
+        
+        # mini-batch training
+        print 'Start Training'
+        start_time = time.clock()
+        iter_num = 0
+        best_valid_acc = -np.inf
+        best_valid_loss = np.inf
+        
+        train_params = {'verbose':verbose,'nb_samples':N,'nb_epoch':nb_epoch}
+        logger = cbks.baseLogger(train_params)
+        history_log = cbks.History(train_params, self.log_fn, config)
+        if self.checkpoint_fn is not None:
+            checkpoint = cbks.ModelCheckPoint(self.checkpoint_fn,self)
+        history_log.on_train_begin()
+        
+        #valid_ins = [valid_X, valid_y]
+        for epoch in xrange(nb_epoch):
+            if train_X is not None:
+                trainIterator = dataGen.flow(train_X,train_y,
+                                   batch_size=batch_size,transform=True)
+                validIterator = dataGen.flow(valid_X,valid_y,
+                                   batch_size=batch_size,transform=True)
 
+            if epoch > 0 and epoch % epoch_step == 0:
+                self.learning_rate *= lr_drop_rate
+                self.reset_lr()
+                print "\n---On eopch %d, drop lr to %.1e by %.2f\n"%(epoch,
+                        self.learning_rate, lr_drop_rate)
+
+            logger.on_epoch_begin(epoch)
+            history_log.on_epoch_begin(epoch)
+            #for start, end in zip(range(0,N,batch_size), range(batch_size,N,batch_size)):
+            for train_data in trainIterator:
+                iter_num += 1
+                if iter_num > stopIter:
+                    print "\n-----!! Training stop at %d iteration-----\n" %iter_num
+                    return
+                logger.on_batch_begin(iter_num)
+                #train_ins = [train_X[start:end], train_y[start:end]]
+                train_ins = [train_data[0], train_data[1]]
+                [train_loss, train_acc] = self._train_acc(*train_ins)
+                
+                batch_logs = {'loss':train_loss, 'size':batch_size}
+                batch_logs['accuracy'] = train_acc
+                logger.on_batch_end(iter_num, batch_logs)
+                history_log.on_batch_end(iter_num, batch_logs)
+            valid_loss_total, valid_acc_total = 0., 0.
+            nb_seen = 0.
+            #for start, end in zip(range(0,N_val,batch_size), range(batch_size,N_val,batch_size)):
+            for valid_data in validIterator:
+                [val_loss_, val_acc_] = self._get_acc_loss(valid_data[0],valid_data[1])
+                valid_loss_total += val_loss_ * batch_size
+                valid_acc_total += val_acc_ * batch_size
+                nb_seen += batch_size
+            valid_loss = valid_loss_total / nb_seen
+            valid_acc  = valid_acc_total  / nb_seen
+            
+            #if valid_acc > best_valid_acc:
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                best_valid_acc = valid_acc
+            epoch_logs = {'val_loss':valid_loss, 'val_acc':valid_acc}
+            logger.on_epoch_end(epoch, epoch_logs)
+            history_log.on_epoch_end(epoch,epoch_logs)
+            if self.checkpoint_fn is not None:
+                checkpoint.on_epoch_end(epoch,epoch_logs,verbose=verbose)
+        history_log.on_train_end()
+        end_time = time.clock()
+        print "Training finished, best validation error %f"%(best_valid_acc)
+        print 'The training run for %d epochs, with %f epochs/sec'%(nb_epoch,
+                1.*nb_epoch / (end_time - start_time))
+ 
     def fit(self, train_X, train_y, valid_X, valid_y,
             batch_size=50, nb_epoch=20, verbose=True, stopIter=np.inf,
             epoch_step=100,lr_drop_rate=1.):
@@ -334,7 +441,7 @@ class NN(containers.Sequential):
         f = h5py.File(filepath,'r')
         for k in xrange(f.attrs['nb_layers']):
             g = f['layer_{}'.format(k)]
-            weights = [g['param_{}'.format(i)] for i in xrange(g.attrs['nb_params'])]
+            weights = [np.array(g['param_{}'.format(i)]) for i in xrange(g.attrs['nb_params'])]
             self.layers[k].set_param_vals(weights)
         f.close()
 
